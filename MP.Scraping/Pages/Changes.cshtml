@@ -1,0 +1,19 @@
+﻿@page
+@using MP.Scraping.DTOs
+@model ChangesModel
+@{
+    Layout = "_LayoutGames";
+}
+<div class="right">
+    <main class="main">
+        @foreach (ChangeDTO change in Model.Changes)
+        {
+            <a class="change-list-item @(change.ServiceCode.ToLower())-item" href="/servicegame/@change.ServiceCode.ToLower()/@change.GameID">
+                <div>
+                    <span class="list-price">@change.ServiceCode.ToUpper()</span>
+                    <span class="list-game-name">@change.GameName</span>
+                </div>
+            </a>
+        }
+    </main>
+</div>

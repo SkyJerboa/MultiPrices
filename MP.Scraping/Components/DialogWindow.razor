@@ -1,0 +1,12 @@
+﻿<div class="global-background" id="dialog-window-back">
+    <div class="fixed-window" id="dialog-window" style="padding:10px;">
+        <div class="tag_input">
+            <input id="tag_in_window" type="text" name="@name" placeholder="@placeholder">
+        </div>
+        <button id="tag_window_submit">Submit</button>
+    </div>
+</div>
+@code {
+    [Parameter] public string name { get; set; }
+    [Parameter] public string placeholder { get; set; }
+}

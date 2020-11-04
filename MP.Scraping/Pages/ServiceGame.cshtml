@@ -1,0 +1,201 @@
+﻿@page
+@model Scraping.Pages.ServiceGameModel
+@using ITags = MP.Core.Common.Constants.ImageTags
+@using MP.Scraping.Models.History
+@using Microsoft.Extensions.Configuration
+@using MP.Scraping.Components.Game
+@using MP.Core.GameInterfaces
+@inject IConfiguration Configuration
+@{
+    Layout = null;
+
+    string imgServer = Configuration["ImageServer"];
+
+    string mainImgUrl = imgServer + Model.ServiceCode.ToLower() + "/" +
+        (Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_VERTICAL)?.Path
+        ?? Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_HORIZONTAL)?.Path);
+    
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razor Card Redactor Page</title>
+    <link rel="stylesheet" href="~/css/razor-main.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="~/js/changes.js"></script>
+    <script type="text/javascript" src="~/js/card.js"></script>
+    <script type="text/javascript" src="~/js/image-zoom.js"></script>
+    <script type="text/javascript" src="~/js/service_image.js"></script>
+    <script type="text/javascript" src="~/js/applyingToMainGame.js"></script>
+</head>
+<body>
+    <div class="global-background" id="lb-back">
+        <div id="lb-img"></div>
+    </div>
+    <div class="container-card-editor">
+        <main class="card-editor">
+            <div class="global-background" id="add-img-window">
+                <div class="fixed-window">
+                    <div>
+                        <div class="one-line-flex added-img-info-div">
+                            <div class="one-line-flex">
+                                <div>Tag:</div>
+                                <select>
+                                    <option value="none">none</option>
+                                    <option value="@ITags.IMG_VERTICAL">@ITags.IMG_VERTICAL</option>
+                                    <option value="@ITags.IMG_HORIZONTAL">@ITags.IMG_HORIZONTAL</option>
+                                    <option value="@ITags.IMG_LOGO">@ITags.IMG_LOGO</option>
+                                    <option value="@ITags.HEADER">@ITags.HEADER</option>
+                                    <option value="@ITags.SCREENSHOT">@ITags.SCREENSHOT</option>
+                                </select>
+                            </div>
+                            <input type="text" name="url" />
+                            <button type="button">Delete</button>
+                        </div>
+                        <div class="one-line-flex">
+                            <button id="but-add-img-win">Add</button>
+                            <button id="but-save-img-win">Submit</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <form class="card-item card-head-block" id="block-children" onsubmit="saveData('children'); return false;">
+                <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+                <div class="card-image">
+                    <img src="@mainImgUrl">
+                    <div><a href="/game/@Model.Game.MainGameID">Main Game</a></div>
+                </div>
+                <div class="card-chlds">
+                    @foreach (ServiceGame child in Model.Game.Children.Select(i => i.Child))
+                    {
+                        <div class="chlds-item">
+                            <span>@child.Name</span>
+                            <input name="ChildID" type="text" pattern="[0-9]{4,}" placeholder="id" value="@child.ID" size="6">
+                            <button>Remove</button>
+                            <a href="/servicegame/@Model.ServiceCode.ToLower()/@child.MainGameID">Link</a>
+                        </div>
+                    }
+                    <button type="button" class="add-chld-item">Add Child</button>
+                </div>
+                <div class="spaceholder"></div>
+            </form>
+            <form class="card-item card-inputs" id="block-game-info" onsubmit="saveData('game-info'); return false;">
+                <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+                <div class="card-params">
+                    <div><div>Game Name:</div> <input name="Name" type="text" placeholder="Game Name" value="@Model.Game.Name"></div>
+                    <div><div>InnerID:</div> <input name="InnerID" type="text" placeholder="InnerID" value="@Model.Game.InnerID"></div>
+                    <div><div>OfferID:</div> <input name="OfferID" type="text" placeholder="OfferID" value="@Model.Game.OfferID"></div>
+                    <div><div>Is Available:</div> <input name="IsAvailable" type="checkbox" value=true checked=@(Model.Game.IsAvailable)></div>
+                    <div>
+                        <div>Release Date:</div> <input name="AvailabilityDate" type="date" placeholder="Release date" value="@Model.Game.AvailabilityDate?.ToString("yyyy-MM-dd")">
+                        @Model.Game.AvailabilityString
+                    </div>
+                    <div>
+                        <div>Platforms:</div>
+                        <input type="checkbox" name="Platforms" value="Unknown" checked=@(Model.Game.Platforms == GamePlatform.Unknown)><i>Unknown</i>
+                        <input type="checkbox" name="Platforms" value="Windows" checked=@Model.Game.Platforms.HasFlag(GamePlatform.Windows)><i>Windows</i>
+                        <input type="checkbox" name="Platforms" value="Mac" checked=@Model.Game.Platforms.HasFlag(GamePlatform.Mac)><i>Mac</i>
+                        <input type="checkbox" name="Platforms" value="Linux" checked=@Model.Game.Platforms.HasFlag(GamePlatform.Linux)><i>Linux</i>
+                        <input type="checkbox" name="Platforms" value="Android" checked=@Model.Game.Platforms.HasFlag(GamePlatform.Android)><i>Android</i>
+                        <input type="checkbox" name="Platforms" value="IOS" checked=@Model.Game.Platforms.HasFlag(GamePlatform.IOS)><i>IOS</i>
+                    </div>
+                    <div>
+                        <div>Status:</div> <select name="Status">
+                            <option selected=@((byte)Model.Game.Status == 0) value="NoChange">NoChange</option>
+                            <option selected=@((byte)Model.Game.Status == 1) value="InfoUpdated">InfoUpdated</option>
+                            <option selected=@((byte)Model.Game.Status == 2) value="New">New</option>
+                            <option selected=@((byte)Model.Game.Status == 3) value="Deleted">Deleted</option>
+                        </select>
+                    </div>
+                    <div><div>Image Folder:</div> <input name="ImagesPath" type="text" value="@Model.Game.ImagesPath"></div>
+                </div>
+            </form>
+            <component type="typeof(BlockLanguages)" 
+                       render-mode="Static" 
+                       param-languages="@Model.Game.Languages" 
+                       param-UseApplyButton="true"
+                       param-Title="@("Применить значения к MainGame")"/>
+            <component type="typeof(BlockPriceInfo)" 
+                       render-mode="Static" 
+                       param-Currencies="@Model.Currencies" 
+                       param-PriceInfos="@Model.Prices" />
+            <component type="typeof(BlockTranslations)" 
+                       render-mode="Static" 
+                       param-languages="@Model.Languages" 
+                       param-translations="@Model.Game.Translations.Select(i => (ITranslation)i).ToList()" />
+            <component type="typeof(BlockSystemRequirements)" 
+                       render-mode="Static" 
+                       param-SystemRequirements="@Model.Game.SystemRequirements.Select(i => (ISystemRequirement)i)"
+                       param-UseApplyButton="true"
+                       param-Title="@("Применить значения к MainGame")"/>
+        <form class="card-item" id="block-service-images" onsubmit="saveData('service-images'); return false;">
+            <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+            <div style="display:flex; flex-flow: row wrap;">
+                @foreach (SGImage img in Model.Game.Images)
+                {
+                    <div class="card-image">
+                        <input type="hidden" name="id" value="@img.ID" />
+                        <img class="zoomD" src="@(imgServer + Model.ServiceCode + "/" + img.Path)" />
+                        <div>
+                            <div class="card-service-img-tag one-line-flex">
+                                <div>Tag: </div>
+                                <select>
+                                    <option selected="@(img.Tag == ITags.IMG_VERTICAL)" value="@ITags.IMG_VERTICAL">@ITags.IMG_VERTICAL</option>
+                                    <option selected="@(img.Tag == ITags.IMG_HORIZONTAL)" value="@ITags.IMG_HORIZONTAL">@ITags.IMG_HORIZONTAL</option>
+                                    <option selected="@(img.Tag == ITags.IMG_LOGO)" value="@ITags.IMG_LOGO">@ITags.IMG_LOGO</option>
+                                    <option selected="@(img.Tag == ITags.HEADER)" value="@ITags.HEADER">@ITags.HEADER</option>
+                                    <option selected="@(img.Tag == ITags.SCREENSHOT)" value="@ITags.SCREENSHOT">@ITags.SCREENSHOT</option>
+                                </select>
+                                <button class="but-del" type="button">Delete</button>
+                            </div>
+                            <div class="card-service-img-tag">
+                                <a href="@img.SourceUrl">Link</a>
+                                <img class="send-to-main-game right-field-but" type="image" src="/images/send-icon.png" title="Применить значения к MainGame">
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+            <div class="auto-margin">
+                <div>new images count:</div>
+                <div id="new-img-count" style="font-size:35px;text-align: center;"><strong>0</strong></div>
+            </div>
+            <div class="auto-margin" id="add-service-imgs-div">
+                <img class="add-img-but" type="image" src="/images/add-button.png" />
+            </div>
+        </form>
+        @if (Model.Changes?.Count > 0)
+        {
+            <div id="block-changes" class="card-item card-inputs" style="flex-direction: column;">
+                <input type="hidden" name="gameId" value="@Model.Game.MainGameID" />
+                <input type="hidden" name="serviceCode" value="@Model.Game.ServiceCode" />
+                <div>
+                    <button id="remove-change-button">Remove All</button>
+                    <button id="apply-change-button">Apply All</button>
+                </div>
+                @foreach (Change change in Model.Changes)
+                {
+                    foreach (var changeField in change.ChangedFields)
+                    {
+                        <div class="changes-flex">
+                            <input type="hidden" name="changeId" value="@change.ID" />
+                            <input type="hidden" name="fieldName" value="@changeField.Key" />
+                            <div class="left-description">@changeField.Key :</div>
+                            <div class="left-description">@changeField.Value?.ToString()</div>
+                            <div>
+                                <button class="button-change-apply">Apply</button>
+                                <button class="button-change-remove">Remove</button>
+                            </div>
+                        </div>
+                    }
+                }
+            </div>
+        }
+        </main>
+    </div>
+</body>
+</html>

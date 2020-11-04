@@ -1,0 +1,130 @@
+﻿<form class="card-item" id="block-price-infos" onsubmit="saveData('price-infos'); return false;">
+    <input class="card-but-save" type="image" src="/images/save-icon.png" />
+    <div class="absolute-top-right" id="price-info-actions">
+        <button type="button" id="price-info-del-button">Delete</button>
+        <div class="spaceholder"></div>
+        <input type="text" maxlength="2" size="3" placeholder="RU" pattern="[A-Z]{2}" accept="Строка должна соответствовать шаблону [A-Z]{2}">
+        <select name="currency">
+            <option value="none" selected>Nothing</option>
+            @foreach (Currency c in Currencies)
+            {
+                <option value="@c.Code">@c.Name</option>
+            }
+        </select>
+        <button type="button" id="price-info-add-button">Add</button>
+    </div>
+    @PrintPrices()
+</form>
+
+@using MP.Core.Common
+@using MP.Core.Contexts.Games
+@code {
+    [Parameter] public IEnumerable<Currency> Currencies { get; set; }
+    [Parameter] public IEnumerable<PriceInfo> PriceInfos { get; set; }
+
+    RenderFragment PrintPrices()
+    {
+        RenderFragment osTypeUl = null;
+        RenderFragment osData = null;
+
+        RenderFragment result = @<div id="price-infos" style="width: 100%;">
+                <ul class="horizontal-radio">
+                    @osTypeUl
+                </ul>
+                @osData
+            </div>;
+
+        bool firsOst = true;
+        foreach(var osTypeGroup in PriceInfos.GroupBy(i => i.CountryCode))
+        {
+            string country = osTypeGroup.Key;
+            bool fo = firsOst;
+
+            osTypeUl += @<LiHtml id="@($"item-{country}")" 
+                                 name="price-country" 
+                                 value="@country" 
+                                 text="@country" 
+                                 selcted="@fo"/>;
+
+            RenderFragment piLi = null;
+            RenderFragment piVals = null;
+
+            RenderFragment curOsType = @<div id="@country" hidden="@(!fo)">
+                    <ul class="horizontal-radio">
+                        @piLi
+                    </ul>
+                    @piVals
+                </div>;
+
+            bool firstT = true;
+            foreach(var pi in osTypeGroup.OrderBy(i => i.CurrencyCode))
+            {
+                bool ft = firstT;
+                piLi += @<LiHtml id="@($"subitem-{country}-{pi.CurrencyCode}")" 
+                                name="@($"price-currency-{country}")" 
+                                value="@($"{country}-{pi.CurrencyCode}")" 
+                                text="@pi.CurrencyCode"
+                                selcted="@ft"/>;
+
+                piVals += @<div class="price-info" id="@pi.CountryCode-@pi.CurrencyCode" hidden="@(!ft)">
+                    <div class="price-flex one-line-flex" data-type="object">
+                        <input type="hidden" name="Type" value="PriceInfo" />
+                        <input type="hidden" name="ID" value=@pi.ID>
+                        <input type="hidden" name="CountryCode" value=@pi.CountryCode>
+                        <input type="hidden" name="CurrencyCode" value=@pi.CurrencyCode>
+                        <div>
+                            Full Price:<input name="FullPrice" type="text" size="8" placeholder="Full Price" value=@pi.FullPrice required>
+                        </div>
+                        <div>
+                            Current Price:<input name="CurrentPrice" type="text" size="8" placeholder="Current Price" value=@pi.CurrentPrice required>
+                        </div>
+                        <div>
+                            Discount:<input name="Discount" type="text" size="3" placeholder="Discount" value=@pi.Discount required>
+                        </div>
+                        <div>
+                            Is Free:<input name="IsFree" type="checkbox" value=true checked=@(pi.IsFree)>
+                        </div>
+                        <div>
+                            Preorder:<input name="IsPreorder" type="checkbox" value=true checked=@(pi.IsPreorder)>
+                        </div>
+                        <div>
+                            IsAvailable:<input name="IsAvailable" type="checkbox" value=true checked=@(pi.IsAvailable)>
+                        </div>
+                        <div>
+                            URL:<input name="GameLink" type="text" size="20" placeholder="Game URL" value=@pi.GameLink required>
+                            <a href=@pi.GameLink>go</a>
+                        </div>
+                    </div>
+
+                    @foreach (Price price in pi.Prices)
+                    {
+                        <div class="price-flex one-line-flex" data-type="object">
+                            <div>Child</div>
+                            <input type="hidden" name="ID" value=@price.ID>
+                            <div>
+                                Price:<input name="CurrentPrice" type="text" size="8" placeholder="Price" value=@price.CurrentPrice required>
+                            </div>
+                            <div>
+                                Discount:<input name="Discount" type="text" size="4" placeholder="Discount" value=@price.Discount required>
+                            </div>
+                            <div>
+                                Grab Date:<input name="ChangingDate" type="datetime-local" size="20" placeholder="Changing date" value="@price.ChangingDate.ToString("yyyy-MM-ddTHH:mm")" required>
+                            </div>
+                            <div>
+                                <button class="but-del-price" type="button">X</button>
+                            </div>
+                        </div>
+                    }
+                    <button class="but-add-price" type="button" style="margin-left: 2em;">Add</button>
+                </div>;
+
+                firstT = false;
+            }
+
+            osData += curOsType;
+            firsOst = false;
+        }
+
+        return result;
+    }
+}

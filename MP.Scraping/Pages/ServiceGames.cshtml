@@ -1,0 +1,63 @@
+﻿@page "{GameServiceCode}"
+@model Scraping.Pages.ServiceGamesModel
+@{
+    Layout = "_LayoutGames";
+}
+@functions{
+    string PrintPageNavigations()
+    {
+        string output = "";
+
+        output += (Model.CurrentPage == 1)
+            ? "<div>1</div>"
+            : String.Format("<a href=\"/servicegames/{0}\">1</a>", Model.GameServiceCode);
+
+        if (Model.CurrentPage > 3)
+        { output += "<div>...</div>"; }
+        if (Model.CurrentPage > 2)
+        { output += String.Format("<a href=\"/servicegames/{0}?page={1}\">{1}</a>", Model.GameServiceCode, Model.CurrentPage - 1); }
+        if (Model.CurrentPage != 1 && Model.CurrentPage != Model.MaxPages)
+        { output += String.Format("<div>{0}</div>", Model.CurrentPage); }
+        if (Model.CurrentPage < Model.MaxPages - 1)
+        { output += String.Format("<a href=\"/servicegames/{0}?page={1}\">{1}</a>", Model.GameServiceCode, Model.CurrentPage + 1); }
+        if (Model.CurrentPage < Model.MaxPages - 2)
+        { output += "<div>...</div>"; }
+
+
+        output += (Model.CurrentPage == Model.MaxPages)
+            ? String.Format("<div>{0}</div>", Model.MaxPages)
+            : String.Format("<a href=\"/servicegames/{0}?page={1}\">{1}</a>", Model.GameServiceCode, Model.MaxPages);
+
+        return output;
+    }
+}
+<div class="right">
+    <header class="header">
+        <nav class="header-nav">
+            <span><button>Home</button></span>
+            <span><button>Merge</button></span>
+            <span><button>Save</button></span>
+            <span><button>Blank1</button></span>
+            <span><button>Blank2</button></span>
+        </nav>
+    </header>
+    <main class="main">
+        @foreach (ServiceGame game in Model.Games)
+        {
+            <div class="card-list-item">
+                <input type="checkbox">
+                <span class="list-game-name">@game.Name</span>
+                @*<span class="list-price">@game.Prices?.First()?.CurrentPrice</span>
+                <span class="list-price">@game.Prices?.First()?.FullPrice</span>
+                <span class="list-price">@game.Prices?.First()?.Discount</span>*@
+                <div>
+                    <span><a href="/game/@game.MainGameID">MainGameLink</a></span>
+                    <span><a href="/servicegame/@Model.GameServiceCode/@game.MainGameID">GameLink</a></span>
+                </div>
+            </div>
+        }
+        <div class="pages">
+            @Html.Raw(PrintPageNavigations());
+        </div>
+    </main>
+</div>

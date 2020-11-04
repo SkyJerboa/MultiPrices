@@ -1,0 +1,141 @@
+﻿@page "{code}"
+@model Scraping.Pages.ServiceModel
+@using MP.Scraping.Models.Services
+@using Newtonsoft.Json;
+@{
+    Layout = null;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razor Card Redactor Page</title>
+    <link rel="stylesheet" href="~/css/razor-main.css" />
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/js/service.js"></script>
+    <script type="text/javascript" src="~/js/window_exception.js"></script>
+    <script>
+        var countries = [];
+        @foreach (ServiceCountry country in Model.Service.SupportedCountries)
+        {
+            <text>
+            countries.push({
+                country: '@country.CountryCode',
+                currencies: @Html.Raw(JsonConvert.SerializeObject(country.CurrencyList)),
+                langs: @Html.Raw(JsonConvert.SerializeObject(country.LanguageList))
+            });
+            </text>
+        }
+
+        var setData = function () {
+            let countryNode = $('#country');
+            let country = countries.find(i => i.country == countryNode.val());
+            let cur = $('#currency');
+            let lang = $('#lang');
+            cur.empty();
+            lang.empty();
+
+            country.currencies.forEach(function (el) {
+                cur.append(`<option value="${el}">${el}</option>`)
+            });
+            country.langs.forEach(function (el) {
+                lang.append(`<option value="${el}">${el}</option>`)
+            });
+        };
+
+        $(function () {
+            setData();
+            $('#country').change(function () {
+                setData();
+            });
+        });
+    </script>
+</head>
+<body>
+    <div class="container-card-editor">
+        <div class="card-first">
+            <div class="service-header">
+                <img src="/images/logos/@(Model.Service.Code.ToLower()).svg" width="50" height="50" />
+                <strong>@Model.Service.Name</strong>
+                <strong>@Model.Service.Code</strong>
+                @if (Model.Editing)
+                {
+                    <button class="last-flex-child" id="save">Save</button>
+                }
+                else
+                {
+                    <div class="last-flex-child">@Model.SStatus</div>
+                    string dis = (Model.SStatus == Common.ScrapingStatus.Free) ? "" : "disabled";
+                    <button class="last-flex-child" id="run" @dis>Run</button>
+                }
+            </div>
+            <div class="service-options">
+                @if (!Model.Editing)
+                {
+                    <div>
+                        <div class="short-option">Only Price</div>
+                        <input class="checkbox-15" id="onlyPrice" type="checkbox" name="OnlyPrice" value="OnlyPrices" checked>
+                    </div>
+                    <div>
+                        <div class="short-option">Is Testing</div>
+                        <input class="checkbox-15" id="isTesting" type="checkbox" name="IsTesing" value="IsTesting">
+                    </div>
+                    <div>
+                        <select id="country">
+                            @foreach (ServiceCountry country in Model.Service.SupportedCountries)
+                            {
+                                <option value="@country.CountryCode">@country.CountryCode</option>
+                            }
+                        </select>
+                        <select id="currency"></select>
+                        <select id="lang"></select>
+                    </div>
+                }
+            </div>
+        </div>
+        <div class="card-second">
+            <table border="1" width="100%">
+                <tr>
+                    <th>Start time</th>
+                    <th>End time</th>
+                    <th>New</th>
+                    <th>Updated</th>
+                    <th>Deleted</th>
+                    <th>Price Updated</th>
+                    <th>No changed</th>
+                    <th>Returned</th>
+                    <th>Requests count</th>
+                    <th>Exception</th>
+                </tr>
+                @foreach (ServiceRequest sr in Model.Service.Requests.OrderByDescending(i => i.ID))
+                {
+                    <tr>
+                        <td>@sr.StartTime.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>@sr.EndTime.ToString("dd.MM.yyyy HH:mm:ss")</td>
+                        <td>@sr.New</td>
+                        <td>@sr.Updated</td>
+                        <td>@sr.Deleted</td>
+                        <td>@sr.PriceUpdated</td>
+                        <td>@sr.NoChanged</td>
+                        <td>@sr.Returned</td>
+                        <td>@sr.RequestsCount</td>
+                        @if (sr.Exceptions == null)
+                        {
+                            <td>NO</td>
+                        }
+                        else
+                        {
+                            <td><button class="show-exception-button" id="@sr.ID">Show</button></td>
+                        }
+                    </tr>
+                }
+            </table>
+        </div>
+    </div>
+    <div class="exception-window" id="exception-window" hidden>
+        <div class="exception-window-text">
+        </div>
+        <button class="exception-window-button" id="exception-window-close-button">Close</button>
+    </div>
+</body>
+</html>

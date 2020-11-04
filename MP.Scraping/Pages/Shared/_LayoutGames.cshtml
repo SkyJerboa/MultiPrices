@@ -1,0 +1,32 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>@ViewBag.Title</title>
+    <link rel="stylesheet" href="~/css/razor-main.css" />
+</head>
+<body>
+    <div class="container">
+        <aside class="aside">
+            <nav>
+                <ul>
+                    <li><a href="/games">All Games</a></li>
+                    <li></li>
+                    <li><a href="/servicegames/us">Ubisoft</a></li>
+                    <li><a href="/servicegames/eg">Epic Games</a></li>
+                    <li><a href="/servicegames/ea">Origin</a></li>
+                    <li><a href="/servicegames/gog">Good old Games</a></li>
+                    <li></li>
+                    <li><a href="/changes">Changes</a></li>
+                    <li><a href="/relationchanges">Relation changes</a></li>
+                    <li></li>
+                    <li><a href="/servicelist">Services</a></li>
+                    <li></li>
+                    <li><a href="/tags">Tags</a></li>
+                </ul>
+            </nav>
+        </aside>
+        @RenderBody()
+    </div>
+</body>
+</html>

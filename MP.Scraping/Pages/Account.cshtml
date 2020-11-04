@@ -1,0 +1,33 @@
+﻿@page "{action}"
+@model MP.Scraping.Pages.Account
+@{
+    @if (User.Identity.IsAuthenticated)
+    {
+        <h3>Already athenticated</h3>
+    }
+    else
+    {
+        <h3>Log In:</h3>
+        <form method="post" asp-antiforgery="false">
+            <div class="form-group">
+                <label class="col-form-label col-md-2">Username</label>
+                <div class="col-md-10">
+                    <input name="username"/>
+                </div>
+            </div>
+            <div class="form-group">
+                <label class="col-form-label col-md-2">Password</label>
+                <div class="col-md-10">
+                    <input name="password" type="password" />
+                </div>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-outline-primary btn-sm">Log in</button>
+            </div>
+        </form>
+        @if (Model.LoginError != null)
+        {
+            <div class="col-md-10" style="color:red">@Model.LoginError</div>
+        }
+    }
+}

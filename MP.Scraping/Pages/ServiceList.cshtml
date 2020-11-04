@@ -1,0 +1,86 @@
+﻿@page
+@model Scraping.Pages.ServiceListModel
+@using MP.Scraping.Models.Services;
+@using MP.Scraping.Common;
+@using System.Text;
+@{
+    Layout = "_LayoutGames";
+}
+@functions {
+    string GetStatusColor(string serviceCode)
+    {
+        ScrapingStatus status = ServiceScraper.GetScrapingStatus(serviceCode);
+        switch(status)
+        {
+            case ScrapingStatus.Free: return "green";
+            case ScrapingStatus.Requests: return "orange";
+            case ScrapingStatus.Save: return "red";
+            default: return "grey";
+        }
+    }
+
+    string GetRequestInfoString(ServiceRequest request)
+    {
+        StringBuilder sb = new StringBuilder();
+        sb.Append(request.New);
+        sb.Append('/');
+        sb.Append(request.Updated);
+        sb.Append('/');
+        sb.Append(request.Deleted);
+        sb.Append('/');
+        sb.Append(request.PriceUpdated);
+        sb.Append('/');
+        sb.Append(request.NoChanged);
+        sb.Append('/');
+        sb.Append(request.Returned);
+
+        return sb.ToString();
+    }
+}
+    <div class="right">
+        <header class="header">
+            <nav class="header-nav">
+                <span><button id="compile-scripts-but">CompileScripts</button></span>
+                <span><button id="reload-assembly-but">ReloadAssembly</button></span>
+            </nav>
+        </header>
+        <main class="main">
+            @foreach (Service service in Model.Services)
+            {
+                <a href="/service/@service.Code">
+                    <div class="service-item">
+                        <div class="first-string">
+                            <img src="/images/logos/@(service.Code.ToLower()).svg" width="30" height="30" />
+                            <strong>@service.Name</strong>
+                            <strong>@service.Code</strong>
+                            <div class="circle circle-@GetStatusColor(service.Code)"></div>
+                        </div>
+                        @if (service.Requests.Count > 0)
+                        {
+                            ServiceRequest lastRequest = service.Requests?.Last();
+                            <div class="second-string">
+                                <div>
+                                    <div>Start time</div>
+                                    <div>@lastRequest.StartTime</div>
+                                </div>
+                                <div>
+                                    <div>End time</div>
+                                    <div>@lastRequest.EndTime</div>
+                                </div>
+                                <div>
+                                    <div>N/U/D/PU/NC/R</div>
+                                    <div>@GetRequestInfoString(lastRequest)</div>
+                                </div>
+                                <div>
+                                    <div>Exceptions</div>
+                                    <div>@(lastRequest.Exceptions == null ? "NO" : "YES")</div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </a>
+            }
+        </main>
+        <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+        <script type="text/javascript" src="~/js//serviceListActions.js"></script>
+    </div>

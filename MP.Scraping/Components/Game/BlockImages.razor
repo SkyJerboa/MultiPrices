@@ -1,0 +1,73 @@
+﻿<form class="card-item" id="block-images" onsubmit="saveData('images'); return false;">
+    <input class="card-but-save" type="image" src="/images/save-icon.png" />
+    @PrintImgBlocks("Vertical", ITags.IMG_VERTICAL)
+    @PrintImgBlocks("Horizontal", ITags.IMG_HORIZONTAL)
+    @PrintImgBlocks("Logo", ITags.IMG_LOGO)
+    @PrintImgBlocks("Header", ITags.HEADER)
+
+    @*@PrintImageDiv("Vertical", Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_VERTICAL)?.Path, true)
+        @PrintImageDiv("Horizontal", Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_HORIZONTAL)?.Path, true)
+        @PrintImageDiv("Logo", Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_LOGO)?.Path, true)
+        @PrintImageDiv("Header", Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.HEADER)?.Path, true)*@
+    <ul id="screenshots">
+    @foreach (GImage img in Images.Where(i => i.Tag == ITags.SCREENSHOT).OrderBy(i => i.Order))
+    {
+        <li>
+        @PrintImageDiv(img.ID, "Screenshot", "screenshot", img.Path, false)
+        </li>
+    }
+    </ul>
+    <div class="auto-margin" id="add-img-div">
+        <input type="file" accept=".png, .jpg, .jpeg" hidden multiple />
+        <img class="add-img-but" id="add-screenshoot-but" type="image" src="/images/add-button.png" />
+    </div>
+</form>
+
+@using MP.Core.GameInterfaces;
+@using MP.Core.Contexts.Games;
+@using ITags = MP.Core.Common.Constants.ImageTags;
+@code {
+    [Parameter] public IEnumerable<GImage> Images { get; set; }
+    [Parameter] public string ImageServer { get; set; }
+    [Parameter] public string PreFolder { get; set; }
+
+    RenderFragment PrintImgBlocks(string name, string tag)
+    {
+        RenderFragment result = null;
+
+        if (Images.Any(i => i.Tag == tag))
+        {
+            foreach (IImage img in Images.Where(i => i.Tag == tag))
+                result += PrintImageDiv(img.ID, name, img.Tag, img.Path, true);
+
+            return result;
+        }
+        else
+        {
+            return PrintImageDiv(0, name, tag, null, true);
+        }
+    }
+
+    RenderFragment PrintImageDiv(int id, string name, string tag, string url, bool canReplace)
+    {
+        string imgUrl = (url == null) ? "/images/no-image.png" : ImageServer + PreFolder +  url;
+
+        return @<div class="card-image">
+            <input type="hidden" name="id" value="@id">
+            <div>@name</div>
+            <img class="zoomD" src="@imgUrl"/>
+            <div data-tag="@tag">
+                @if (canReplace)
+                {
+                    <input type="file" accept=".png, .jpg, .jpeg" hidden />
+                    <button type="button" class="but-img-replace">Replace</button>
+                    <button type="button" class="but-img-clear">Delete</button>
+                }
+                else 
+                {
+                    <button type="button" class="but-img-delete">Delete</button>
+                }
+            </div>
+        </div>;
+    }
+}

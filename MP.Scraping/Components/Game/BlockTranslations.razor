@@ -1,0 +1,59 @@
+﻿<form class="card-item card-inputs" id="block-translations" onsubmit="saveData('translations'); return false;">
+    <input class="card-but-save" type="image" src="/images/save-icon.png" />
+    <div class="absolute-top-right" id="translations-actions">
+        <button type="button" id="translations-del-button">Delete</button>
+        <div class="spaceholder"></div>
+        <select name="trans">
+            <option value="none" selected>Nothing</option>
+            @foreach (string langCode in languages.Select(i => i.LangCode))
+            {
+                if (!translations.Any(i => i.LanguageCode == langCode))
+                {
+                    <option value="@langCode">@langCode.ToUpper()</option>
+                }
+            }
+        </select>
+        <button type="button" id="trans-add-button">Add</button>
+    </div>
+    <div id="translations">
+        <ul class="horizontal-radio">
+            @_ulHtml
+        </ul>
+        @_transHtml
+    </div>
+</form>
+
+@using MP.Core.Common;
+@using MP.Core.GameInterfaces;
+@using TK = MP.Core.Common.Constants.TransKeys;
+@code {
+    [Parameter] public List<Language> languages { get; set; }
+    [Parameter] public List<ITranslation> translations { get; set; }
+
+    private RenderFragment _ulHtml { get; set; }
+    private RenderFragment _transHtml { get; set; }
+
+    protected override void OnInitialized()
+    {
+        PrintTrans();
+    }
+
+    void PrintTrans()
+    {
+        bool firstDiv = true;
+        foreach(var lang in languages)
+        {
+            if (translations.Any(i => i.LanguageCode == lang.LangCode))
+            {
+                string name = translations.FirstOrDefault(i => i.LanguageCode == lang.LangCode && i.Key == TK.GAME_NAME)?.Value;
+                string description = translations.FirstOrDefault(i => i.LanguageCode == lang.LangCode && i.Key == TK.GAME_DESCRIPTION)?.Value;
+                bool activeButton = firstDiv;
+
+                _ulHtml += @<LiHtml id="@($"lang-{lang.LangCode}")" name="langCode" value="@lang.LangCode" text="@lang.LangCode.ToUpper()" selcted="@activeButton"/>;
+                _transHtml += @<TransHtml langCode="@lang.LangCode" name="@name" description="@description" hide="@(!activeButton)"/>;
+
+                firstDiv = false;
+            }
+        }
+    }
+}

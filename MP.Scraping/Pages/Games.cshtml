@@ -1,0 +1,90 @@
+﻿@page
+@model Scraping.Pages.GamesModel
+@using MP.Scraping.DTOs;
+@{
+    Layout = "_LayoutGames";
+}
+@functions{
+    string PrintPageNavigations()
+    {
+        string output = "";
+        string pageLink = "/games?page={0}&" + String.Join('&', Request.Query
+                .Where(i => i.Key != "page")
+                .Select(i => i.Key + "=" + i.Value));
+        if (pageLink.EndsWith('&'))
+            pageLink = pageLink.Substring(0, pageLink.Length - 1);
+
+        string firstPageLink = (Request.Query.Keys.Any(i => i == "page"))
+            ? "/games?" + String.Join('&', Request.Query
+                .Where(i => i.Key != "page")
+                .Select(i => i.Key + "=" + i.Value))
+            : "/games";
+
+        output += (Model.CurrentPage == 1)
+        ? "<div>1</div>"
+        : $"<a href=\"{firstPageLink}\">1</a>";
+
+        if (Model.CurrentPage > 3)
+        { output += "<div>...</div>"; }
+        if (Model.CurrentPage > 2)
+        { output += String.Format("<a href=\"" + pageLink +"\">{0}</a>", Model.CurrentPage - 1); }
+        if (Model.CurrentPage != 1 && Model.CurrentPage != Model.MaxPages)
+        { output += String.Format("<div>{0}</div>", Model.CurrentPage); }
+        if (Model.CurrentPage < Model.MaxPages - 1)
+        { output += String.Format("<a href=\"" + pageLink + "\">{0}</a>", Model.CurrentPage + 1); }
+        if (Model.CurrentPage < Model.MaxPages - 2)
+        { output += "<div>...</div>"; }
+
+
+        output += (Model.CurrentPage == Model.MaxPages)
+            ? String.Format("<div>{0}</div>", Model.MaxPages)
+            : String.Format("<a href=\"" + pageLink + "\">{0}</a>", Model.MaxPages);
+
+        return output;
+    }
+}
+
+<div class="right">
+    <header class="header">
+        <nav class="header-nav">
+            <span><button>Home</button></span>
+            <span><button id="merge_button">Merge</button></span>
+            <span><button>Save</button></span>
+            <span class="search-container">
+                <form action="">
+                    <input type="text" placeholder="Search..." value="@Model.Q" name="q">
+                    <button type="submit">Search</button>
+                </form>
+            </span>
+        </nav>
+    </header>
+    <main class="main">
+        <div class="fixed-window" id="merge_window">
+            <select>
+            </select>
+            <button>Save</button>
+        </div>
+        @foreach (GameDTO game in Model.Games)
+        {
+            <div class="card-list-item">
+                <input type="checkbox">
+                <input type="hidden" value="@game.ID">
+                <span class="list-game-name">@game.Name</span>
+                <span class="list-game-params">@game.GameType</span>
+                <span class="list-game-params">@game.Status</span>
+                @*<span class="list-price">@game.Prices?.First()?.CurrentPrice</span>
+                <span class="list-price">@game.Prices?.First()?.FullPrice</span>
+                <span class="list-price">@game.Prices?.First()?.Discount</span>*@
+                <div>
+                    <span class="list-game-services">@String.Join(',', @game.ServiceCodes ?? Enumerable.Empty<string>())</span>
+                    <span><a href="/game/@game.ID">GameLink</a> </span>
+                </div>
+            </div>
+        }
+        <div class="pages">
+            @Html.Raw(PrintPageNavigations());
+        </div>
+    </main>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/js/merge_window.js"></script>
+</div>

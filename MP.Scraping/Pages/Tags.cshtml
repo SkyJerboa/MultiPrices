@@ -1,0 +1,41 @@
+﻿@page
+@model MP.Scraping.Pages.TagsModel
+@using Components
+@{
+    Layout = "_LayoutGames";
+}
+
+<div class="right">
+    <header class="header">
+        <nav class="header-nav">
+            <span><button id="pin_button">PinTo</button></span>
+            <span><button id="unpin_button">UnPin</button></span>
+            <span><button id="add_button">Add</button></span>
+            <span><button id="delete_button">Delete</button></span>
+        </nav>
+    </header>
+    <main class="main">
+        @(await Html.RenderComponentAsync<DialogWindow>(RenderMode.Static, new { name = "tag", placeholder = "tag name" }))
+        <div id="tags">
+            @foreach (var tag in Model.Tags.OrderBy(i => i.Key))
+            {
+                <div class="main-tag">
+                    <input type="checkbox" name="tag" value="@tag.Key" />@tag.Key
+                    <div class="sub-tags">
+                        @foreach (var cTag in tag.Value)
+                        {
+                            <div class="item">
+                                <input type="checkbox" name="@cTag" , value="@cTag">
+                                <label>@cTag</label>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <hr />
+            }
+        </div>
+    </main>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/js/autocomplete.js"></script>
+    <script type="text/javascript" src="~/js/tag.js"></script>
+</div>

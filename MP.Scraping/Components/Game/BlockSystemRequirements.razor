@@ -1,0 +1,88 @@
+﻿<form class="card-item card-inputs" id="block-system-requirements" onsubmit="saveData('system-requirements'); return false;">
+    <input class="card-but-save" type="image" src="/images/save-icon.png" />
+    @if (UseApplyButton)
+    {
+        <img class="send-side-but" type="image" src="/images/send-icon.png" title="@Title" />
+    }
+    <div class="absolute-top-right" id="sys-req-actions">
+        <button type="button" id="sys-req-del-button">Delete</button>
+        <div class="spaceholder"></div>
+        <select name="system">
+            <option value="none" selected>Nothing</option>
+            <option value="OSX">OSX</option>
+            <option value="Linux">Linux</option>
+            <option value="Windows">Windows</option>
+        </select>
+        <select name="system-type">
+            <option value="none" selected>Nothing</option>
+            <option value="Minimum">Minimum</option>
+            <option value="Recommended">Recommended</option>
+        </select>
+        <button type="button" id="sys-req-add-button">Add</button>
+    </div>
+    <div id="system-requirements">
+        <ul class="horizontal-radio">
+            @_osTypeUl
+        </ul>
+        @_osData
+    </div>
+</form>
+
+@using MP.Core.GameInterfaces;
+@code {
+    [Parameter] public IEnumerable<ISystemRequirement> SystemRequirements { get; set; }
+    [Parameter] public bool UseApplyButton { get; set; }
+    [Parameter] public string Title { get; set; }
+
+    private RenderFragment _osTypeUl { get; set; }
+    private RenderFragment _osData { get; set; }
+
+    protected override void OnInitialized()
+    {
+        PrintSystemRequirements();
+    }
+
+    void PrintSystemRequirements()
+    {
+        bool firsOst = true;
+        foreach(var osTypeGroup in SystemRequirements.GroupBy(i => i.SystemType))
+        {
+            OSType ost = osTypeGroup.Key;
+            bool fo = firsOst;
+
+            _osTypeUl += @<LiHtml id="@($"item-{ost.ToString()}")" 
+                                  name="sys-os" 
+                                  value="@ost.ToString()" 
+                                  text="@ost.ToString()" 
+                                  selcted="@fo"/>;
+
+            RenderFragment osLi = null;
+            RenderFragment osVals = null;
+
+            RenderFragment curOsType = @<div id="@ost.ToString()" hidden="@(!fo)">
+                    <ul class="horizontal-radio">
+                        @osLi
+                    </ul>
+                    @osVals
+                </div>;
+
+            bool firstT = true;
+            foreach(var sysReq in osTypeGroup.OrderBy(i => i.Type))
+            {
+                bool ft = firstT;
+                osLi += @<LiHtml id="@($"subitem-{ost.ToString()}-{sysReq.Type.ToString()}")" 
+                                name="@($"sys-type-{ost.ToString()}")" 
+                                value="@($"{ost.ToString()}-{sysReq.Type.ToString()}")" 
+                                text="@sysReq.Type.ToString()"
+                                selcted="@ft"/>;
+
+                osVals += @<SysReqHtml Id="@($"{sysReq.SystemType}-{sysReq.Type}")" SystemRequirement="@sysReq" Hide="@(!ft)"/>;
+
+                firstT = false;
+            }
+
+            _osData += curOsType;
+            firsOst = false;
+        }
+    }
+}

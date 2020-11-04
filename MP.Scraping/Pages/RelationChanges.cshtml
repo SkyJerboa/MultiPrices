@@ -1,0 +1,35 @@
+﻿@page
+@model Scraping.Pages.RelationChangesModel
+@using MP.Scraping.Models.History;
+
+@{
+    Layout = "_LayoutGames";
+}
+@functions {
+    string GetStatusColor(ChangeStatus status)
+    {
+        switch (status)
+        {
+            case ChangeStatus.Added: return "green";
+            case ChangeStatus.Updated: return "orange";
+            default: return "red";
+        }
+    }
+}
+<div class="right">
+    <main class="main">
+        @foreach (RelationChange change in Model.RelationChanges)
+        {
+        <div class="change-list-item">
+            <input type="hidden" name="id" value="@change.ID">
+            <a class="margin-right-10" href="/game/@change.LeftID">Parent Game</a>
+            <a class="margin-right-25" href="/game/@change.RightID">Child Game</a>
+            <button class="margin-right-25 button-apply">Apply</button>
+            <button class="margin-right-10 button-cancel">Cancel</button>
+            <div class="circle circle-@GetStatusColor(change.ChangeStatus)"></div>
+        </div>
+        }
+    </main>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/js/relation_changes.js"></script>
+</div>

@@ -1,0 +1,78 @@
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <AspNetCoreHostingModel>InProcess</AspNetCoreHostingModel>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Game Services\**" />
+    <Compile Remove="MigrationsMS\**" />
+    <Compile Remove="Migrations_old\**" />
+    <Compile Remove="Scripts\**" />
+    <Compile Remove="Temp\**" />
+    <Compile Remove="Testing\**" />
+    <Content Remove="Game Services\**" />
+    <Content Remove="MigrationsMS\**" />
+    <Content Remove="Migrations_old\**" />
+    <Content Remove="Scripts\**" />
+    <Content Remove="Temp\**" />
+    <Content Remove="Testing\**" />
+    <EmbeddedResource Remove="Game Services\**" />
+    <EmbeddedResource Remove="MigrationsMS\**" />
+    <EmbeddedResource Remove="Migrations_old\**" />
+    <EmbeddedResource Remove="Scripts\**" />
+    <EmbeddedResource Remove="Temp\**" />
+    <EmbeddedResource Remove="Testing\**" />
+    <None Remove="Game Services\**" />
+    <None Remove="MigrationsMS\**" />
+    <None Remove="Migrations_old\**" />
+    <None Remove="Scripts\**" />
+    <None Remove="Temp\**" />
+    <None Remove="Testing\**" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Remove="Common\Helpers\ContextHelper.cs" />
+    <Compile Remove="Common\Helpers\StringList.cs" />
+    <Compile Remove="DTOs\ServiceGameWithPrices.cs" />
+    <Compile Remove="Models\MPContext.cs" />
+    <Compile Remove="Models\ServiceGames\Language.cs" />
+    <Compile Remove="Models\ServiceGames\Price.cs" />
+    <Compile Remove="Models\ServiceGames\PriceInfo.cs" />
+    <Compile Remove="Models\ServiceGames\ServiceGameContext_old.cs" />
+    <Compile Remove="Models\Services\Variable.cs" />
+    <Compile Remove="TranslationTools.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove=".gitignore" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <PackageReference Include="AngleSharp" Version="0.14.0" />
+    <PackageReference Include="FluentFTP" Version="32.4.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Razor.RuntimeCompilation" Version="3.1.7" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.7">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="Npgsql.Bulk" Version="0.8.1.1" />
+    <PackageReference Include="Serilog.AspNetCore" Version="3.4.0" />
+    <PackageReference Include="System.Drawing.Common" Version="4.7.0" />
+  </ItemGroup>
+
+
+  <ItemGroup>
+    <ProjectReference Include="..\MP.Core\MP.Core.csproj" />
+  </ItemGroup>
+
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1json__JsonSchema="" /></VisualStudio></ProjectExtensions>
+
+</Project>

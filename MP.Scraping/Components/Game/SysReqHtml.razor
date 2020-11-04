@@ -1,0 +1,20 @@
+﻿<div class="card-params" id="@Id" data-type="object" hidden="@Hide">
+    <input type="hidden" name="SystemType" value="@SystemRequirement.SystemType" />
+    <input type="hidden" name="Type" value="@SystemRequirement.Type" />
+    <div><div>Operating System:</div> <input name="OS" type="text" value="@SystemRequirement.OS"></div>
+    <div><div>Processor:</div> <input name="CPU" type="text" value="@SystemRequirement.CPU"></div>
+    <div><div>Graphic:</div> <input name="GPU" type="text" value="@SystemRequirement.GPU"></div>
+    <div><div>RAM:</div> <input name="RAM" type="text" maxlength="10" value="@SystemRequirement.RAM"></div>
+    <div><div>Hard Drive:</div> <input name="Storage" type="text" maxlength="10" value="@SystemRequirement.Storage"></div>
+    <div><div>DirectX:</div> <input name="DirectX" type="text" maxlength="20" value="@SystemRequirement.DirectX"></div>
+    <div><div>Sound:</div> <input name="Sound" type="text" value="@SystemRequirement.Sound"></div>
+    <div><div>Network:</div> <input name="Network" type="text" value="@SystemRequirement.Network"></div>
+    <div><div>Other:</div> <input name="Other" type="text" value="@SystemRequirement.Other"></div>
+</div>
+
+@using MP.Core.GameInterfaces;
+@code {
+    [Parameter] public string Id { get; set; }
+    [Parameter] public ISystemRequirement SystemRequirement { get; set; }
+    [Parameter] public bool Hide { get; set; }
+}

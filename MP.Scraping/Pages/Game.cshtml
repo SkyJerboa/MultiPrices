@@ -1,0 +1,179 @@
+﻿@page "{id:int}"
+@model Scraping.Pages.GameModel
+@using ITags = MP.Core.Common.Constants.ImageTags
+@using MP.Core.Contexts.Games
+@using MP.Core.GameInterfaces
+@using Microsoft.Extensions.Configuration
+@using Components
+@using Components.Game
+@inject IConfiguration Configuration
+@{
+    Layout = null;
+
+    string mainImgUrl = Configuration["ImageServer"] +
+        (Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_VERTICAL)?.Path
+        ?? Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_HORIZONTAL)?.Path);
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Razor Card Redactor Page</title>
+    <link rel="stylesheet" href="~/css/razor-main.css" />
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" />
+    <script type="text/javascript">
+        var tags = {
+            @foreach (var tag in Model.Tags)
+            {
+                <text>'@tag.Value': @tag.Key,</text>
+            }
+        }
+    </script>
+    <script type="text/javascript" src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script type="text/javascript" src="~/lib/jqueryui/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.bundle.min.js"></script>
+    <script type="text/javascript" src="~/js/card.js"></script>
+    <script type="text/javascript" src="~/js/image-zoom.js"></script>
+    <script type="text/javascript" src="~/js/autocomplete.js"></script>
+    <script type="text/javascript" src="~/js/applyingToChildren.js"></script>
+    @*@Html.AntiForgeryToken()*@
+</head>
+<body>
+    <div class="modal fade" id="exceptionModalWindow" tabindex="-1" role="dialog" aria-labelledby="modalCenterTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLongTitle">Exception</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    ...
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="global-background" id="lb-back">
+        <div id="lb-img"></div>
+    </div>
+    <div class="container-card-editor">
+        <main class="card-editor">
+            @(await Html.RenderComponentAsync<DialogWindow>(RenderMode.Static, new { name = "tag", placeholder = "tag name" }))
+            <form class="card-item card-head-block" id="block-children" onsubmit="saveData('children'); return false;">
+                <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+                <div class="card-header-image">
+                    <img src="@mainImgUrl">
+                    @foreach (string serviceCode in Model.Game.GameServicesCodes ?? Enumerable.Empty<string>())
+                    {
+                        PriceInfo sp = Model.Game.PriceInfos.FirstOrDefault(i => i.ServiceCode == serviceCode.ToUpper());
+                        <div class="services-info">
+                            <a href="/servicegame/@serviceCode/@Model.Game.ID">@serviceCode</a>
+                            <div>@sp?.FullPrice</div>
+                            <div>@sp?.CurrentPrice</div>
+                            <div>@sp?.Discount</div>
+                        </div>
+                    }
+                </div>
+                <div class="card-chlds">
+                    @foreach (Game child in Model.Game.Children.Select(i => i.Child))
+                    {
+                        <div class="chlds-item">
+                            <span>@child.Name</span>
+                            <input name="ChildID" type="text" pattern="[0-9]{4,}" placeholder="id" value="@child.ID" size="6" title="Значение должно быть цыфовым">
+                            <button type="button">Remove</button>
+                            <a href="/game/@child.ID">Link</a>
+                        </div>
+                    }
+                    <button type="button" class="add-chld-item">Add Child</button>
+                </div>
+                <div class="spaceholder"></div>
+            </form>
+            @if (Model.Game.Status != GameStatus.Completed)
+            {
+                <button id="set-complete" type="button" class="btn btn-outline-primary">Set Complete</button>
+            }
+            <form class="card-item card-inputs" id="block-game-info" onsubmit="saveData('game-info'); return false;">
+                <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+                <div class="card-params">
+                    <div><div>Game Name:</div> <input name="Name" type="text" placeholder="Game Name" value="@Model.Game.Name" required></div>
+                    <div><div>Name ID:</div> <input name="NameID" type="text" placeholder="Name ID" value="@Model.Game.NameID" required></div>
+                    <div><div>Brand:</div> <input name="Brand" type="text" placeholder="Brand" value="@Model.Game.Brand"><img class="apply-to-children right-field-but" type="image" src="~/images/send-icon.png" title="Apply to children" /></div>
+                    <div><div>Developer:</div> <input name="Developer" type="text" placeholder="Developer" value="@Model.Game.Developer"><img class="apply-to-children right-field-but" type="image" src="~/images/send-icon.png" title="Apply to children" /></div>
+                    <div><div>Publisher:</div> <input name="Publisher" type="text" placeholder="Publisher" value="@Model.Game.Publisher"><img class="apply-to-children right-field-but" type="image" src="~/images/send-icon.png" title="Apply to children" /></div>
+                    <div>
+                        <div>GameType:</div> <select name="GameType">
+                            <option selected=@((byte)Model.Game.GameType == 0) value="Unknown">Unknown</option>
+                            <option selected=@((byte)Model.Game.GameType == 1) value="FullGame">FullGame</option>
+                            <option selected=@((byte)Model.Game.GameType == 2) value="DLC">DLC</option>
+                            <option selected=@((byte)Model.Game.GameType == 3) value="Edition">Edition</option>
+                            <option selected=@((byte)Model.Game.GameType == 4) value="Pack">Pack</option>
+                            <option selected=@((byte)Model.Game.GameType == 5) value="Demo">Demo</option>
+                        </select>
+                    </div>
+                    <div><div>Release Date:</div> <input name="ReleaseDate" type="date" placeholder="Release date" value="@Model.Game.ReleaseDate?.ToString("yyyy-MM-dd")"></div>
+                    <div>
+                        <div>Platforms:</div>
+                        <input type="checkbox" name="GamePlatform" value="Unknown" checked=@(Model.Game.GamePlatform == GamePlatform.Unknown)><i>Unknown</i>
+                        <input type="checkbox" name="GamePlatform" value="Windows" checked=@Model.Game.GamePlatform.HasFlag(GamePlatform.Windows)><i>Windows</i>
+                        <input type="checkbox" name="GamePlatform" value="Mac" checked=@Model.Game.GamePlatform.HasFlag(GamePlatform.Mac)><i>Mac</i>
+                        <input type="checkbox" name="GamePlatform" value="Linux" checked=@Model.Game.GamePlatform.HasFlag(GamePlatform.Linux)><i>Linux</i>
+                        <input type="checkbox" name="GamePlatform" value="Android" checked=@Model.Game.GamePlatform.HasFlag(GamePlatform.Android)><i>Android</i>
+                        <input type="checkbox" name="GamePlatform" value="IOS" checked=@Model.Game.GamePlatform.HasFlag(GamePlatform.IOS)><i>IOS</i>
+                    </div>
+                    <div>
+                        <div>Status:</div> <select name="Status">
+                            <option selected=@((byte)Model.Game.Status == 0) value="New">New</option>
+                            <option selected=@((byte)Model.Game.Status == 1) value="Completed">Completed</option>
+                            <option selected=@((byte)Model.Game.Status == 2) value="Deleted">Deleted</option>
+                            <option selected=@((byte)Model.Game.Status == 3) value="NotAvailable">NotAvailable</option>
+                            <option selected=@((byte)Model.Game.Status == 4) value="Returned">Returned</option>
+                        </select>
+                    </div>
+                    <div><div>Image Folder:</div> <input name="ImagesPath" type="text" value="@Model.Game.ImagesPath"></div>
+                    <div><div>Order:</div> <input name="Order" type="number" value="@Model.Game.Order"></div>
+                </div>
+            </form>
+            <component type="typeof(BlockLanguages)"
+                       render-mode="Static"
+                       param-languages="@Model.Game.Languages"
+                       param-UseApplyButton="true"
+                       param-Title="@("Применить значения ко всем дочерним объектам")" />
+            <form class="card-item" id="block-tags" onsubmit="saveData('tags'); return false;">
+                <input class="card-but-save" type="image" src="~/images/save-icon.png" />
+                <img class="send-side-but" type="image" src="/images/send-icon.png" title="Применить значения ко всем дочерним объектам" />
+                <div class="absolute-top-right">
+                    <button type="button" id="tag-add-but">Add</button>
+                </div>
+                <div class="card-tags">
+                    @foreach (Tag tag in Model.Game.Tags.Select(i => i.Tag))
+                    {
+                        <div class="card-tag">
+                            <div>@tag.Name</div>
+                            <input type="hidden" name="Tag" value="@tag.ID" />
+                            <button type="button" class="card-tag-delete-but">X</button>
+                        </div>
+                    }
+                </div>
+            </form>
+            <component type="typeof(BlockTranslations)"
+                       render-mode="Static"
+                       param-languages="@Model.Languages"
+                       param-translations="@Model.Game.Translations.Select(i => (ITranslation)i).ToList()" />
+            <component type="typeof(BlockSystemRequirements)"
+                       render-mode="Static"
+                       param-SystemRequirements="@Model.Game.SystemRequirements.Select(i => (ISystemRequirement)i)"
+                       param-UseApplyButton="true"
+                       param-Title="@("Применить значения ко всем дочерним объектам")" />
+            <component type="typeof(BlockImages)"
+                       render-mode="Static"
+                       param-Images="@Model.Game.Images.OrderBy(i => i.Order)"
+                       param-ImageServer="@Configuration["ImageServer"]" />
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+﻿<form class="card-item" id="block-languages" onsubmit="saveData('languages'); return false;">
+    <input class="card-but-save" type="image" src="/images/save-icon.png" />
+    @if (UseApplyButton)
+    {
+        <img class="send-side-but" type="image" src="/images/send-icon.png" title="@Title"/>
+    }
+    <div class="absolute-top-right">
+        <button type="button" id="lang-add-but">Add</button>
+    </div>
+    @if (!String.IsNullOrEmpty(languages))
+    {
+        @foreach (var lang in JsonConvert.DeserializeObject<Dictionary<string, Localization>>(languages))
+        {
+            <div class="card-lang" data-type="dictionary">
+                <input type="text" size="3" pattern="[a-z]{2}_[A-Z]{2}" title="Строка должна иметь формат ru_RU" placeholder="ru_RU" value="@lang.Key" data-type="key" required>
+                <select name="lang" data-type="value">
+                    <option value=@((int)Localization.Unknown) selected=@(lang.Value == Localization.Unknown)>Unknown</option>
+                    <option value=@((int)Localization.Voice) selected=@(lang.Value == Localization.Voice)>Voice</option>
+                    <option value=@((int)Localization.Text) selected=@(lang.Value == Localization.Text)>Text</option>
+                    <option value=@((int)Localization.All) selected=@(lang.Value == Localization.All)>All</option>
+                </select>
+                <button type="button" class="card-lang-delete-button">X</button>
+            </div>
+        }
+    }
+</form>
+
+@using Newtonsoft.Json;
+@using MP.Core.Enums;
+@code
+{
+    [Parameter] public string languages { get; set; }
+    [Parameter] public bool UseApplyButton { get; set; } = false;
+    [Parameter] public string Title { get; set; }
+}

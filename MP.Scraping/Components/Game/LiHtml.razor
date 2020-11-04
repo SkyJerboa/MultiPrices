@@ -1,0 +1,13 @@
+﻿<li>
+    <input checked="@selcted" id="@id" name="@name" type="radio" value=@value>
+    <label for=@id>@text</label>
+
+</li>
+
+@code {
+    [Parameter] public string id { get; set; }
+    [Parameter] public string name { get; set; }
+    [Parameter] public string value { get; set; }
+    [Parameter] public string text { get; set; }
+    [Parameter] public bool selcted { get; set; }
+}
