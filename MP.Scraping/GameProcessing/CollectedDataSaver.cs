@@ -1,5 +1,4 @@
 ﻿using Microsoft.EntityFrameworkCore;
-using MP.Core;
 using MP.Core.Common.Heplers;
 using MP.Core.Contexts.Games;
 using MP.Core.History;
@@ -78,7 +77,7 @@ namespace MP.Scraping.GameProcessing
 
             if (!options.IsTesting)
             {
-                string imgServerDirectory = ScrapingConfigurationManager.Config.ImageFolderPath;
+                string imgServerDirectory = ScrapingConfigurationManager.Config.ImageConfiguration.ImageFolderPath;
                 _imgDownloader = new ImageDownloader(serviceCode, imgServerDirectory, _gameSaver, _cancellationToken);
             }
         }
@@ -138,13 +137,12 @@ namespace MP.Scraping.GameProcessing
             bool hasAdditionalChanges = false;
             if (existingPI == null)
             {
-                finalPI = existingPI;
+                finalPI = newPI;
             }
             else
             {
                 hasPIChanges = CheckAndChangePriceInfo(finalPI, newPI);
-                hasAdditionalChanges |= CheckAndChangePreorder(finalPI, collectedGame.Offer);
-                hasAdditionalChanges |= !finalPI.IsAvailable;
+                hasAdditionalChanges |= CheckAndChangeAdditionalDataInPI(finalPI, collectedGame.Offer);
             }
 
             hasAdditionalChanges |= ChackAndChangePreorderReleaseDate(existingServiceGame, existingMainGame, collectedGame.ReleaseDate);
@@ -301,7 +299,8 @@ namespace MP.Scraping.GameProcessing
                 FullPrice = gameOffer.FullPrice,
                 CurrentPrice = gameOffer.CurrentPrice,
                 Discount = gameOffer.Discount,
-                IsPreorder = gameOffer.IsPreorder
+                IsPreorder = gameOffer.IsPreorder,
+                DiscountEndDate = gameOffer.DiscountEndDate
             };
 
             pInfo.IsFree = (pInfo.FullPrice == 0);
@@ -338,17 +337,31 @@ namespace MP.Scraping.GameProcessing
                 changedPI.Prices.Add(CreatePrice(changedPI));
                 hasChanges = true;
             }
+            
+            changedPI.DiscountEndDate = comparedPI.DiscountEndDate;
 
             return hasChanges;
         }
 
-        private bool CheckAndChangePreorder(PriceInfo checkedPriceInfo, ScrapedGameOffer offer)
+        private bool CheckAndChangeAdditionalDataInPI(PriceInfo checkedPriceInfo, ScrapedGameOffer offer)
         {
-            if (checkedPriceInfo.IsPreorder == offer.IsPreorder)
-                return false;
+            bool hasChanges = false;
 
-            checkedPriceInfo.IsPreorder = offer.IsPreorder;
-            return true;
+            if (checkedPriceInfo.IsPreorder != offer.IsPreorder)
+            {
+                checkedPriceInfo.IsPreorder = offer.IsPreorder;
+                hasChanges = true;
+            }
+
+            if (checkedPriceInfo.GameLink != offer.URL)
+            {
+                checkedPriceInfo.GameLink = offer.URL;
+                hasChanges = true;
+            }
+
+            hasChanges |= !checkedPriceInfo.IsAvailable;
+
+            return hasChanges;
         }
 
         private bool ChackAndChangePreorderReleaseDate(ServiceGame serviceGame, Game mainGame, object date)

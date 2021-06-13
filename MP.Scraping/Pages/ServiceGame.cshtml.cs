@@ -190,9 +190,10 @@ namespace MP.Scraping.Pages
             else if (type == "service-images")
             {
                 int[] imgToDelIds = jo["deleted"]?.ToObject<int[]>() ?? new int[0];
-                string imgFolder = _configuration["ImageFolder"];
+                string imgFolder = _configuration.GetSection("ImageConfiguration")["ImageFolderPath"];
                 ServiceGame game = _context.Games.FirstOrDefault(i => i.ID == Id);
-                string gameImgFolder = $"{imgFolder}/{ServiceCode}/{game.ImagesPath}";
+                string serviceImgFolder = ServiceCode.ToLower();
+                string gameImgFolder = $"{imgFolder}/{serviceImgFolder}/{game.ImagesPath}";
 
                 LoadAndSaveServiceImages(jo["added"] as JArray, game);
 
@@ -203,16 +204,16 @@ namespace MP.Scraping.Pages
                 {
                     foreach (SGImage img in imgsNeedToDel)
                     {
+                        imgsToDel.Add(img);
+
                         List<GImage> fImgs = gContext.Images.Where(i => i.Name == img.Name).ToList();
-                        if (fImgs.Count != 0 && fImgs.Any(i => i.Path.StartsWith($"{ServiceCode}/{img.Path}")))
+                        if (fImgs.Count != 0 && fImgs.Any(i => i.Path == $"{serviceImgFolder}/{img.Path}"))
                             continue;
 
-                        imgsToDel.Add(img);
-                        System.IO.File.Delete(Path.Combine(imgFolder, ServiceCode.ToLower(), img.Path));
+                        FileHelper.DeleteFilesWithPattern(gameImgFolder, $"{img.Name}*");
                     }
 
-                    if (Directory.Exists(gameImgFolder) && Directory.GetFiles(gameImgFolder).Length == 0)
-                            Directory.Delete(gameImgFolder);
+                    FileHelper.DeleteEmptyFolder(gameImgFolder);
                 }
 
                 _context.Images.RemoveRange(imgsToDel);
@@ -321,7 +322,7 @@ namespace MP.Scraping.Pages
             List<string> moveFilesNames = ChangeImgsPathsInDB(oldFolderName, newFolderName);
             ChangeImgsPathInMainGameDB(oldFolderName, newFolderName);
 
-            string imgsServerFolder = _configuration["ImageFolder"];
+            string imgsServerFolder = _configuration.GetSection("ImageConfiguration")["ImageFolderPath"];
             string oldImgFolderAbsolutePath = Path.Combine(imgsServerFolder, Game.ServiceCode.ToLower(), oldFolderName);
             string newImgFolderAbsolutePath = Path.Combine(imgsServerFolder, Game.ServiceCode.ToLower(), newFolderName);
 
@@ -363,7 +364,7 @@ namespace MP.Scraping.Pages
             if (jArray == null)
                 return;
 
-            string imgPath = _configuration["ImageFolder"];
+            string imgPath = _configuration.GetSection("ImageConfiguration")["ImageFolderPath"];
 
             List<SGImage> imgsToAdd = new List<SGImage>();
 

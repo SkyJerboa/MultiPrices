@@ -27,9 +27,12 @@ namespace MP.Core.Contexts.Games
         public float? CurrentPrice { get; set; }
         public float? FullPrice { get; set; }
         public float? Discount { get; set; }
+        public DateTime? DiscountEndDate { get; set; }
         public bool IsFree { get; set; }
         public bool IsAvailable { get; set; } = true;
         public bool IsPreorder { get; set; }
+        public bool IsIgnore { get; set; }
+        public bool IsPersistent { get; set; }
         public ICollection<Price> Prices { get; set; } = new List<Price>();
 
         public bool HasChanges(PriceInfo priceInfo)
@@ -37,7 +40,9 @@ namespace MP.Core.Contexts.Games
             return CurrencyCode != priceInfo.CurrencyCode || GameLink != priceInfo.GameLink
                 || CurrentPrice != priceInfo.CurrentPrice || FullPrice != priceInfo.FullPrice
                 || Discount != priceInfo.Discount || IsFree != priceInfo.IsFree
-                || IsPreorder != priceInfo.IsPreorder || IsAvailable != priceInfo.IsAvailable;
+                || IsPreorder != priceInfo.IsPreorder || IsAvailable != priceInfo.IsAvailable
+                || IsIgnore != priceInfo.IsIgnore || IsPersistent != priceInfo.IsPersistent 
+                || DiscountEndDate != priceInfo.DiscountEndDate;
         }
 
         public void ApplyChanges(PriceInfo priceInfo)
@@ -50,6 +55,9 @@ namespace MP.Core.Contexts.Games
             IsFree = priceInfo.IsFree;
             IsPreorder = priceInfo.IsPreorder;
             IsAvailable = priceInfo.IsAvailable;
+            IsIgnore = priceInfo.IsIgnore;
+            IsPersistent = priceInfo.IsPersistent;
+            DiscountEndDate = priceInfo.DiscountEndDate;
         }
 
         public void CompareAndChange(PriceInfo priceInfo)

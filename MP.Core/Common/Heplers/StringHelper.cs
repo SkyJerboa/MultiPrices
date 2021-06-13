@@ -36,6 +36,9 @@ namespace MP.Core.Common.Heplers
                 }
             }
 
+            if (strBuilder.Length == 0)
+                return null;
+
             if (strBuilder[0] == '-')
                 strBuilder.Remove(0, 1);
             if (strBuilder[strBuilder.Length - 1] == '-')
@@ -61,7 +64,7 @@ namespace MP.Core.Common.Heplers
 
             string res = str;
 
-            for (int i = 0; i < keyValues.Length; i = i + 2)
+            for (int i = 0; i < keyValues.Length; i += 2)
                 res = res.Replace($"${keyValues[i]}", keyValues[i + 1]);
 
             return res;

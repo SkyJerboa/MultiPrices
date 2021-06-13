@@ -17,7 +17,7 @@ namespace MP.Client.ComponentModels.DbAdapters
             (SELECT ""Path"" FROM ""Images"" WHERE ""Tag"" = 'logo-vertical' AND g.""ID"" = ""GameID"" LIMIT  1) as ""ImageVertical""
             FROM ""PriceInfos"" as pi
             INNER JOIN ""Games"" as g ON ""GameID"" = g.""ID""
-            WHERE g.""Status"" = 'Completed' AND pi.""IsAvailable"" AND pi.""CountryCode"" = '{0}' AND pi.""CurrencyCode"" = '{1}' AND 
+            WHERE g.""Status"" = 'Completed' AND pi.""IsAvailable"" AND NOT pi.""IsIgnore"" AND pi.""CountryCode"" = '{0}' AND pi.""CurrencyCode"" = '{1}' AND 
         ";
 
         protected const string GAMEID_AND_SERVICECODDE_CONDITION = @"

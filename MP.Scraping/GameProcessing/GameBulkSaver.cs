@@ -131,7 +131,7 @@ namespace MP.Scraping.GameProcessing
             List<PriceInfo> priceInfosToDelete = _mgContext.PriceInfos
                 .AsNoTracking()
                 .Where(i => i.ServiceCode == _serviceCode && i.CountryCode == countryCode 
-                    && i.CurrencyCode == currencyCode && i.IsAvailable && !_gameSubmittedIds.Contains(i.GameID))
+                    && i.CurrencyCode == currencyCode && i.IsAvailable && !i.IsPersistent && !_gameSubmittedIds.Contains(i.GameID))
                 .ToList();
 
             ReturnGames();
@@ -207,8 +207,8 @@ namespace MP.Scraping.GameProcessing
         {
             _hContextBulk.Insert(relationChanges, InsertConflictAction.DoNothing());
 
-            _hContextBulk.Insert(changes.Where(i => i.ID == 0));
             _hContextBulk.Update(changes.Where(i => i.ID != 0).OrderBy(i => i.ID));
+            _hContextBulk.Insert(changes.Where(i => i.ID == 0));
         }
 
         private void SaveImages()
@@ -238,8 +238,8 @@ namespace MP.Scraping.GameProcessing
             List<ServiceGame> serviceGamesList = _gamesList.Select(i => i.Item2).ToList();
 
             serviceGamesList.ForEach(i => i.MainGameID = _sgToMGMap[i].ID);
-            _sgContextBulk.Insert(serviceGamesList.Where(i => i.ID == 0).ToList());
             _sgContextBulk.Update(serviceGamesList.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _sgContextBulk.Insert(serviceGamesList.Where(i => i.ID == 0).ToList());
 
             List<SGSystemRequirement> systemRequirements = new List<SGSystemRequirement>();
             List<SGTranslation> translations = new List<SGTranslation>();
@@ -255,10 +255,10 @@ namespace MP.Scraping.GameProcessing
                 translations.AddRange(g.Translations);
             }
 
-            _sgContextBulk.Insert(systemRequirements.Where(i => i.ID == 0).ToList());
             _sgContextBulk.Update(systemRequirements.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
-            _sgContextBulk.Insert(translations.Where(i => i.ID == 0).ToList());
+            _sgContextBulk.Insert(systemRequirements.Where(i => i.ID == 0).ToList());
             _sgContextBulk.Update(translations.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _sgContextBulk.Insert(translations.Where(i => i.ID == 0).ToList());
 
             _gameSubmittedIds.AddRange(serviceGamesList.Select(i => i.MainGameID));
         }
@@ -268,8 +268,8 @@ namespace MP.Scraping.GameProcessing
             List<Game> mainGames = _gamesList.Select(i => i.Item1).ToList();
 
             mainGames.OrderBy(i => i.ID);
-            _mgContextBulk.Insert(mainGames.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Update(mainGames.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _mgContextBulk.Insert(mainGames.Where(i => i.ID == 0).ToList());
 
             List<GSystemRequirement> systemRequirements = new List<GSystemRequirement>();
             List<GTranslation> translations = new List<GTranslation>();
@@ -303,12 +303,12 @@ namespace MP.Scraping.GameProcessing
                 $"\"{nameof(GTranslation.Key)}\""
             });
 
-            _mgContextBulk.Insert(systemRequirements.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Update(systemRequirements.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _mgContextBulk.Insert(systemRequirements.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Insert(translations, InsertConflictAction.UpdateIndex<GTranslation>(translationsKeyColumns, i => i.Value));
 
-            _mgContextBulk.Insert(priceInfos.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Update(priceInfos.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _mgContextBulk.Insert(priceInfos.Where(i => i.ID == 0).ToList());
 
             List<Price> prices = new List<Price>();
             foreach (PriceInfo pi in priceInfos)
@@ -319,8 +319,8 @@ namespace MP.Scraping.GameProcessing
             _mgContextBulk.Insert(prices);
 
             List<Tag> tagList = tags.ToList();
-            _mgContextBulk.Insert(tagList.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Update(tagList.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _mgContextBulk.Insert(tagList.Where(i => i.ID == 0).ToList());
 
             tagRelations.ForEach(i => i.TagID = i.Tag.ID);
             _mgContextBulk.Insert(tagRelations, InsertConflictAction.DoNothing());
@@ -334,8 +334,8 @@ namespace MP.Scraping.GameProcessing
                 .ToList();
             _piList.ForEach(i => i.GameID = i.Game.ID);
 
-            _mgContextBulk.Insert(_piList.Where(i => i.ID == 0).ToList());
             _mgContextBulk.Update(_piList.Where(i => i.ID != 0).OrderBy(i => i.ID).ToList());
+            _mgContextBulk.Insert(_piList.Where(i => i.ID == 0).ToList());
 
             pList.ForEach(i => i.ServicePriceID = i.PriceInfo.ID);
             _mgContextBulk.Insert(pList);

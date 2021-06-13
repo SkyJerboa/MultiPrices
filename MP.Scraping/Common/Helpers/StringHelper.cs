@@ -102,7 +102,14 @@ namespace MP.Scraping.Common.Helpers
             return res;
         }
 
-        public static string GetString(this JToken jt) => jt?.Value<string>();
+        public static string GetString(this JToken token) => token?.Value<string>();
+        public static string GetFirstString(this IEnumerable<JToken> tokens) 
+        {
+            if (tokens == null || tokens.Count() == 0)
+                return null;
+            
+            return tokens.First().GetString(); 
+        }
 
         public static string CreateGuidString()
         {

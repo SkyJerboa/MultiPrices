@@ -17,7 +17,7 @@ namespace MP.Client.ComponentModels.DbAdapters
                 g.""ID"", g.""Name"", g.""NameID"", g.""GameType"", g.""ReleaseDate"", g.""ImageHorizontal"", g.""ImageVertical"", '{3}' as ""GroupName""
             FROM g
             LEFT JOIN ""PriceInfos"" as pi ON pi.""GameID"" = g.""ID""
-            WHERE pi.""IsAvailable"" AND pi.""CountryCode"" = '{1}' AND pi.""CurrencyCode"" = '{2}'";
+            WHERE pi.""IsAvailable"" AND NOT pi.""IsIgnore"" AND pi.""CountryCode"" = '{1}' AND pi.""CurrencyCode"" = '{2}'";
 
         GameGroup[] _gameGroups;
 

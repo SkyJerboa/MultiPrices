@@ -71,6 +71,8 @@
                 case "is": return "is_IS"; //Icelandic //íslenska
                 case "fa": return "fa_IR"; //Farsi - Iran //ﻰﺴﺮﺎﻓ
                 case "vietnamese": return "vi_VN";//Vietnamese (Viet Nam) //Tiểng Việt
+                case "et": return "et_EE"; //Estonian //eesti
+                case "la": return "la_LA"; //Latin //latine
                 default:
                     Serilog.Log.Warning($"Unknown language '{lang}'");
                     return lang;

@@ -31,7 +31,7 @@ namespace MP.Scraping.Models.Services
             get
             {
                 if (_imageDirectory == null)
-                    _imageDirectory = System.IO.Path.Combine(ScrapingConfigurationManager.Config.ImageFolderPath, Code.ToLower());
+                    _imageDirectory = System.IO.Path.Combine(ScrapingConfigurationManager.Config.ImageConfiguration.ImageFolderPath, Code.ToLower());
                 return _imageDirectory;
             }
         }

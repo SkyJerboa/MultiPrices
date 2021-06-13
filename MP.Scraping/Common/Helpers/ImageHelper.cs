@@ -11,8 +11,11 @@ namespace MP.Scraping.Common.Helpers
 
         public static Bitmap ResizeImage(Image image, int width, int height)
         {
+            //return new Bitmap(image, new Size(width, height));
+
             var destRect = new Rectangle(0, 0, width, height);
-            var destImage = new Bitmap(width, height);
+            var pixelFormat = GetPixelFormat(image);
+            var destImage = new Bitmap(width, height, pixelFormat);
 
             destImage.SetResolution(image.HorizontalResolution, image.VerticalResolution);
 
@@ -33,6 +36,24 @@ namespace MP.Scraping.Common.Helpers
             return destImage;
         }
 
+        public static Bitmap ReduceImageByHorizontal(Image image, int width)
+        {
+            if (image.Width <= width)
+                return (Bitmap)image.Clone();
+
+            int height = width * image.Height / image.Width;
+            return ResizeImage(image, width, height);
+        }
+
+        public static Bitmap ReduceImageByVertical(Image image, int height)
+        {
+            if (image.Height <= height)
+                return (Bitmap)image.Clone();
+
+            int width = height * image.Width / image.Height;
+            return ResizeImage(image, width, height);
+        }
+
         public static Bitmap ReduceImage(Image image)
         {
             bool isHorizontal = image.Width > image.Height;
@@ -44,6 +65,23 @@ namespace MP.Scraping.Common.Helpers
             int newWidth = (isHorizontal) ? image.Width * newHeight / image.Height : MAX_WIDTH;
 
             return ResizeImage(image, newWidth, newHeight);
+        }
+
+        private static PixelFormat GetPixelFormat(Image img)
+        {
+            PixelFormat pf = img.PixelFormat;
+            switch (pf)
+            {
+                case PixelFormat.Indexed:
+                case PixelFormat.Format1bppIndexed:
+                case PixelFormat.Format4bppIndexed:
+                case PixelFormat.Format8bppIndexed:
+                    return PixelFormat.Format16bppRgb555;
+                case (PixelFormat)8207:
+                    return PixelFormat.Format32bppRgb;
+                default:
+                    return pf;
+            }
         }
     }
 }

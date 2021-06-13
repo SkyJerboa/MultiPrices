@@ -11,6 +11,24 @@ namespace MP.Scraping.GameProcessing.ScrapedGameModels
 {
     public class ScrapedGame
     {
+        public object this[string key]
+        {
+            get
+            {
+                if (AdditionalValues.ContainsKey(key))
+                    return AdditionalValues[key];
+                else
+                    return null;
+            }
+            set
+            {
+                if (AdditionalValues.ContainsKey(key))
+                    AdditionalValues[key] = value;
+                else
+                    AdditionalValues.Add(key, value);
+            }
+        }
+
         public string InnerID { get; set; }
         public string OfferID { get; set; }
         public bool IsNewGame { get; set; }
@@ -30,9 +48,12 @@ namespace MP.Scraping.GameProcessing.ScrapedGameModels
         public string[] Tags { get; set; }
         public ScrapedGameImages Images { get; } = new ScrapedGameImages();
         public ScrapedGameOffer Offer { get; } = new ScrapedGameOffer();
+        /// <summary>
+        /// Можно ли сейчас приобрести игру
+        /// </summary>
         public bool IsAvailable { get; set; }
 
-        public Dictionary<string, object> AdditionalValues = new Dictionary<string, object>();
+        public Dictionary<string, object> AdditionalValues { get; } = new Dictionary<string, object>();
         
         public void SetLocalizations(SortedDictionary<string, Localization> localizationMap)
         {

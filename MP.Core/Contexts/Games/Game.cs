@@ -15,6 +15,7 @@ namespace MP.Core.Contexts.Games
         [Key]
         public int ID { get; set; }
         [Required]
+        [NotCompare]
         public string Name { get; set; }
         [Required]
         public string NameID { get; set; }
@@ -123,7 +124,8 @@ namespace MP.Core.Contexts.Games
         DLC = 2,
         Edition = 3,
         Pack = 4,
-        Demo = 5
+        Demo = 5,
+        Software = 6
     }
 
     [Flags]

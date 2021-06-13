@@ -1,4 +1,5 @@
-﻿using MP.Core.Contexts.Games;
+﻿using MP.Client.Common.ClientMetadata;
+using MP.Core.Contexts.Games;
 using MP.Core.Enums;
 using System.Collections.Generic;
 
@@ -20,6 +21,8 @@ namespace MP.Client.SiteModels.GameModels.GameFullInfo
         public string ReleaseDate { get; set; }
         public string ImageVertical { get; set; }
         public string ImageHorizontal { get; set; }
+
+        public Metadata Meta { get; set; }
         
         public IEnumerable<string> Tags { get; set; }
         public IEnumerable<string> Screenshots { get; set; }

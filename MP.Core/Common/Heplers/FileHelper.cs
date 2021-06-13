@@ -66,5 +66,17 @@ namespace MP.Core.Common.Heplers
 
             return new byte[20];
         }
+
+        public static void DeleteFilesWithPattern(string folderPath, string namePattern)
+        {
+            foreach (string path in Directory.GetFiles(folderPath, namePattern))
+                File.Delete(path);
+        }
+
+        public static void DeleteEmptyFolder(string folderPath)
+        {
+            if (Directory.Exists(folderPath) && Directory.GetFiles(folderPath).Length == 0)
+                Directory.Delete(folderPath);
+        }
     }
 }

@@ -153,9 +153,9 @@ namespace MP.Scraping.GameProcessing
                 token: _cancellationToken.Token))
             {
 
-                dataSaver.SaveData();
-
                 dataSaver.GamesSaved += ChangeStepToDownloadingImgs;
+
+                dataSaver.SaveData();
 
 
                 RequestsSumInfo.EndTime = DateTime.Now;

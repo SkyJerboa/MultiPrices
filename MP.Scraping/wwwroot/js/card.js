@@ -21,6 +21,7 @@ $(document).ready(function () {
     });
 
     $('#set-complete').on('click', (event) => {
+        event.target.disabled = true;
         $.ajax({
             type: 'POST',
             url: '?handler=setconfirm',
@@ -189,13 +190,19 @@ function pricesEvents() {
                     Discount:<input name="Discount" type="text" size="3" placeholder="Discount" required>
                 </div>
                 <div>
-                    Is Free:<input name="IsFree" type="checkbox">
+                    Free:<input name="IsFree" type="checkbox">
                 </div>
                 <div>
                     Preorder:<input name="IsPreorder" type="checkbox">
                 </div>
                 <div>
-                    IsAvailable:<input name="IsAvailable" type="checkbox">
+                    Available:<input name="IsAvailable" value="true" type="checkbox">
+                </div>
+                <div>
+                    Ignore:<input name="IsIgnore" value="true" type="checkbox">
+                </div>
+                <div>
+                    Persistent:<input name="IsPersistent" value="true" type="checkbox">
                 </div>
                 <div>
                     URL:<input name="GameLink" type="text" size="20" placeholder="Game URL" required>go</a>

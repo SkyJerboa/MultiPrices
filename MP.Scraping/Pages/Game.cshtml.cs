@@ -6,10 +6,10 @@ using MP.Core.Common.Heplers;
 using MP.Core.Contexts.Games;
 using MP.Core.GameInterfaces;
 using MP.Scraping.Common;
-using MP.Scraping.Common.Configuration;
 using MP.Scraping.Common.Constants;
-using MP.Scraping.Common.Ftp;
+using MP.Scraping.Common.Extensions;
 using MP.Scraping.Models.Games;
+using MP.Scraping.Models.ServiceGames;
 using Newtonsoft.Json.Linq;
 using System;
 using System.Collections.Generic;
@@ -40,7 +40,7 @@ namespace MP.Scraping.Pages
         public IActionResult OnGet()
         {
             GetGame();
-            
+
             if (Game == null)
                 return NotFound();
             else
@@ -60,15 +60,7 @@ namespace MP.Scraping.Pages
             if (Game.Status == GameStatus.Completed)
                 return BadRequest();
 
-            if (ScrapingConfigurationManager.Config.FtpConfiguration.UseFtp)
-            {
-                string ImgsFolderPath = ScrapingConfigurationManager.Config.ImageFolderPath;
-                foreach (string imgPath in Game.Images.Select(i => i.Path))
-                {
-                    string fileFullPath = Path.Combine(ImgsFolderPath, imgPath);
-                    FtpManager.UploadFile(fileFullPath, imgPath);
-                }
-            }
+            Game.ResizeAndTransferImages();
 
             Game.Status = GameStatus.Completed;
             _context.SaveChanges();
@@ -204,10 +196,10 @@ namespace MP.Scraping.Pages
                         break;
                     case "Tags":
                         List<GameTagRelation> gGtRels = _context.GameTagRelations.Where(i => i.GameID == Game.ID).ToList();
-                        ApplyToChildren(c => 
+                        ApplyToChildren(c =>
                         {
                             List<GameTagRelation> gtRels = _context.GameTagRelations.Where(i => i.GameID == c.ID).ToList();
-                            foreach(GameTagRelation rel in gGtRels)
+                            foreach (GameTagRelation rel in gGtRels)
                             {
                                 if (!gtRels.Any(i => i.TagID == rel.TagID))
                                     _context.GameTagRelations.Add(new GameTagRelation { GameID = c.ID, TagID = rel.TagID });
@@ -226,7 +218,7 @@ namespace MP.Scraping.Pages
 
         protected override void SaveFormData()
         {
-            string dirPath = _configuration["ImageFolder"];
+            string imgFolderPath = _configuration.GetSection("ImageConfiguration")["ImageFolderPath"];
             string imagesPath = _context.Games.First(i => i.ID == Id).ImagesPath;
             List<GImage> imgsToAdd = new List<GImage>();
             List<GImage> imgsToDelete = new List<GImage>();
@@ -237,7 +229,7 @@ namespace MP.Scraping.Pages
             {
                 int[] orders = ordering.Split(',').Select(i => Int32.Parse(i)).ToArray();
                 List<GImage> orderingImgs = _context.Images.Where(i => orders.Contains(i.ID)).ToList();
-                foreach(int o in orders)
+                foreach (int o in orders)
                 {
                     GImage img = orderingImgs.FirstOrDefault(i => i.ID == o);
                     if (img == null)
@@ -247,7 +239,7 @@ namespace MP.Scraping.Pages
                 }
             }
 
-            string folderPath = Path.Combine(dirPath, imagesPath);
+            string folderPath = Path.Combine(imgFolderPath, imagesPath);
             if (Request.Form.Files.Count > 0 && !Directory.Exists(folderPath))
                 Directory.CreateDirectory(folderPath);
 
@@ -257,7 +249,7 @@ namespace MP.Scraping.Pages
                 string extension = Common.Helpers.StringHelper.GetFileExtensionByMimeType(file.ContentType);
                 string tag = file.Name;
                 string imagePath = Path.Combine(imagesPath, $"{name}.{extension}");
-                string savePath = Path.Combine(dirPath, imagePath);
+                string savePath = Path.Combine(imgFolderPath, imagePath);
 
                 using (var fileStream = System.IO.File.Create(savePath))
                     file.CopyTo(fileStream);
@@ -280,11 +272,18 @@ namespace MP.Scraping.Pages
                 int[] removeIdsArrInt = removeIds.Split(',').Select(i => Int32.Parse(i)).ToArray();
                 imgsToDelete = _context.Images.Where(i => removeIdsArrInt.Contains(i.ID)).ToList();
 
-                foreach (GImage img in imgsToDelete.Where(i => i.Path.StartsWith(Path.Combine(imgsPath, i.Name))))
+                using (ServiceGameContext sgContext = new ServiceGameContext())
                 {
-                    string filePath = Path.Combine(dirPath, img.Path);
-                    if (System.IO.File.Exists(filePath))
-                        System.IO.File.Delete(filePath);
+                    foreach(GImage img in imgsToDelete)
+                    {
+                        string filePath = Path.Combine(imgFolderPath, img.Path);
+                        string dirPath = filePath.Substring(0, filePath.LastIndexOf('/'));
+                        
+                        if (img.Path.StartsWith(imgsPath) || !sgContext.Images.Any(i => i.Name == img.Name))
+                            FileHelper.DeleteFilesWithPattern(dirPath, $"{img.Name}*");
+                        else
+                            FileHelper.DeleteFilesWithPattern(dirPath, $"{img.Name}_*");
+                    }
                 }
             }
 
@@ -298,7 +297,7 @@ namespace MP.Scraping.Pages
         {
             List<string> moveFilesNames = ChangeImgsPathsInDB(oldFolderName, newFolderName);
 
-            string imageServerFolder = _configuration["ImageFolder"];
+            string imageServerFolder = _configuration.GetSection("ImageConfiguration")["ImageFolderPath"];
             string oldImgFolderAbsolutePath = Path.Combine(imageServerFolder, oldFolderName);
             string newImgFolderAbsolutePath = Path.Combine(imageServerFolder, newFolderName);
 

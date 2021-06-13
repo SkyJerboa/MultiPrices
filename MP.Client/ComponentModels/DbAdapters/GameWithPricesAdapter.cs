@@ -1,5 +1,5 @@
 ﻿using Dapper;
-using MP.Client.Common.Constants;
+using MP.Client.Common.Queries;
 using MP.Client.ComponentModels.Common;
 using MP.Client.SiteModels.GameModels.GameWithServices;
 using MP.Core.Common.Heplers;
@@ -39,7 +39,7 @@ namespace MP.Client.ComponentModels.DbAdapters
         protected override string CreateQuery()
         {
             string gamesSelect = CreateGamesSelect();
-            return String.Format(Queries.PRICES_WITH_GAMES_QUERY, 
+            return String.Format(ConstantQueries.PRICES_WITH_GAMES_QUERY, 
                 gamesSelect, _options.CountryCode, _options.CurrencyCode);
         }
 
@@ -51,7 +51,7 @@ namespace MP.Client.ComponentModels.DbAdapters
             if (IsNeedSpecificCondition())
             {
                 selectGames.Append('(');
-                selectGames.Append(Queries.GAMES_QUERY);
+                selectGames.Append(ConstantQueries.GAMES_QUERY);
 
                 string ids = String.Join(',', _gamesIds);
                 string where = String.Format(WHERE_GAMEID_IN, ids);
@@ -68,12 +68,12 @@ namespace MP.Client.ComponentModels.DbAdapters
                     selectGames.Append("\nUNION\n");
 
                 selectGames.Append('(');
-                selectGames.Append(Queries.GAMES_QUERY);
+                selectGames.Append(ConstantQueries.GAMES_QUERY);
 
                 if (!String.IsNullOrEmpty(_priceInfoCondition))
                     _priceInfoCondition = " AND " + _priceInfoCondition;
                 
-                string where = String.Format(Queries.COUNTRY_AND_CURRENCY_CONDITION,
+                string where = String.Format(ConstantQueries.COUNTRY_AND_CURRENCY_CONDITION,
                     _options.CountryCode, _options.CurrencyCode, _priceInfoCondition);
 
                 selectGames.Append(where);

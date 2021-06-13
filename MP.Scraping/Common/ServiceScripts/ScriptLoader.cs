@@ -85,29 +85,7 @@ namespace MP.Scraping.Common.ServiceScripts
             CSharpCompilation compilation = CSharpCompilation.Create(
                 SCRIPT_ASSEMBLY_NAME,
                 syntaxTreesList,
-                new MetadataReference[]
-                {
-                    MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Runtime.AssemblyTargetedPatchBandAttribute).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Microsoft.CSharp.RuntimeBinder.CSharpArgumentInfo).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(GameProcessing.GameService).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(AngleSharp.Configuration).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Core.Contexts.GService).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Newtonsoft.Json.JsonConverter).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Net.Http.HttpClient).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Xml.XmlAttribute).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Collections.Generic.HashSet<string>).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Net.CookieContainer).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(Uri).Assembly.Location),
-                    MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),
-                    MetadataReference.CreateFromFile(typeof(System.Linq.Expressions.BinaryExpression).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.ComponentModel.TypeConverter).Assembly.Location),
-                    MetadataReference.CreateFromFile(Assembly.Load("System.ObjectModel").Location),
-                    MetadataReference.CreateFromFile(typeof(Console).Assembly.Location),
-                    MetadataReference.CreateFromFile(typeof(System.Collections.Immutable.ImmutableDictionary).Assembly.Location)
-                },
+                GetReferences(),
                 new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary, optimizationLevel: OptimizationLevel.Debug)
             );
 
@@ -196,7 +174,7 @@ namespace MP.Scraping.Common.ServiceScripts
         }
 
         /// <summary>
-        /// Выгрудает текущую загруженную сборку скриптов.
+        /// Выгружает текущую загруженную сборку скриптов.
         /// Перед выгрузкой сборки убедитесь, что все ссылки на сборку были удалены, и ни один из скриптов сборки сейчас не запущен
         /// </summary>
         public static void UnloadAssembly()
@@ -219,6 +197,33 @@ namespace MP.Scraping.Common.ServiceScripts
         }
 
         public static Type GetTypeFromScriptAssembly(string type) => _scriptAssembly?.GetType(type);
+
+        private static IEnumerable<MetadataReference> GetReferences()
+        {
+            List<MetadataReference> references = new List<MetadataReference>
+            {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(GameProcessing.GameService).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(AngleSharp.Configuration).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Core.Contexts.GService).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Newtonsoft.Json.JsonConverter).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Net.Http.HttpClient).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Xml.XmlAttribute).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(Uri).Assembly.Location),
+                MetadataReference.CreateFromFile(Assembly.Load("netstandard").Location),
+                MetadataReference.CreateFromFile(typeof(System.ComponentModel.TypeConverter).Assembly.Location),
+                MetadataReference.CreateFromFile(Assembly.Load("System.ObjectModel").Location),
+            };
+
+            IEnumerable<MetadataReference> coreReferences = Assembly
+                .GetEntryAssembly()
+                .GetReferencedAssemblies()
+                .Select(i => MetadataReference.CreateFromFile(Assembly.Load(i).Location));
+
+            references.AddRange(coreReferences);
+
+            return references;
+        }
 
         private static bool IsAssemblyUnloaded()
             => _assemmblyWeakRef == null && _scriptAssemblyContext == null && _scriptAssembly == null;

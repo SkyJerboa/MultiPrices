@@ -8,8 +8,8 @@ namespace MP.Scraping.GameProcessing.ScrapedGameModels
         public float? FullPrice { get; set; }
         public float? CurrentPrice { get; set; }
         public float? Discount { get; set; }
-
         public bool IsPreorder { get; set; }
+        public DateTime? DiscountEndDate { get; set; }
 
         public void CalculateAndSetDiscount()
         {

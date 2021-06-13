@@ -8,7 +8,9 @@ namespace MP.Client.Common.DapperMapper
     {
         public override string[] Parse(object value)
         {
-            return JsonConvert.DeserializeObject<string[]>(value.ToString());
+            return (value is string[])
+                ? (string[])value
+                : JsonConvert.DeserializeObject<string[]>(value.ToString());
         }
 
         public override void SetValue(IDbDataParameter parameter, string[] value)

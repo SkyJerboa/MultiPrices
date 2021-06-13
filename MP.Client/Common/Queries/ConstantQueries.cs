@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-
-namespace MP.Client.Common.Constants
+﻿namespace MP.Client.Common.Queries
 {
-    public class Queries
+    public class ConstantQueries
     {
         public const string GAMES_QUERY = @"
             SELECT ""ID"", ""Name"", ""NameID"", ""GameType"", ""Order"", ""ReleaseDate"",
@@ -16,7 +11,8 @@ namespace MP.Client.Common.Constants
             ";
 
         public const string COUNTRY_AND_CURRENCY_CONDITION = @"
-            AND EXISTS (SELECT 1 FROM ""PriceInfos"" WHERE ""GameID"" = ""Games"".""ID"" AND ""CountryCode"" = '{0}' AND ""CurrencyCode"" = '{1}'{2})";
+            AND EXISTS (SELECT 1 FROM ""PriceInfos"" WHERE ""GameID"" = ""Games"".""ID"" AND ""CountryCode"" = '{0}' AND ""CurrencyCode"" = '{1}'
+                AND ""IsAvailable"" AND NOT ""IsIgnore""{2})";
 
         public const string PRICES_WITH_GAMES_QUERY = @"
             WITH g AS({0})
@@ -24,6 +20,6 @@ namespace MP.Client.Common.Constants
                 g.""ID"", g.""Name"", g.""NameID"", g.""GameType"", g.""ReleaseDate"", g.""ImageHorizontal"", g.""ImageVertical""
             FROM g
             LEFT JOIN ""PriceInfos"" as pi ON pi.""GameID"" = g.""ID""
-            WHERE pi.""IsAvailable"" AND pi.""CountryCode"" = '{1}' AND pi.""CurrencyCode"" = '{2}'";
+            WHERE pi.""IsAvailable"" AND NOT pi.""IsIgnore"" AND pi.""CountryCode"" = '{1}' AND pi.""CurrencyCode"" = '{2}'";
     }
 }

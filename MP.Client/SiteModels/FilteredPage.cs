@@ -1,4 +1,5 @@
-﻿using MP.Client.SiteModels.GameModels.GameWithServices;
+﻿using MP.Client.Common.ClientMetadata;
+using MP.Client.SiteModels.GameModels.GameWithServices;
 using System.Collections.Generic;
 
 namespace MP.Client.SiteModels
@@ -11,6 +12,7 @@ namespace MP.Client.SiteModels
         public int MaxPages { get; set; }
         public int GamesCount { get; set; }
         public int PerPage { get; set; }
+        public Metadata Meta { get; set; }
         public IEnumerable<AllServicesGame> Games { get; set; }
     }
 }

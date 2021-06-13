@@ -10,7 +10,9 @@
 @{
     Layout = null;
 
-    string mainImgUrl = Configuration["ImageServer"] +
+    string imageServer = Configuration.GetSection("ImageConfiguration")["ImageServerURL"];
+
+    string mainImgUrl = imageServer +
         (Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_VERTICAL)?.Path
         ?? Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_HORIZONTAL)?.Path);
 }
@@ -113,6 +115,7 @@
                             <option selected=@((byte)Model.Game.GameType == 3) value="Edition">Edition</option>
                             <option selected=@((byte)Model.Game.GameType == 4) value="Pack">Pack</option>
                             <option selected=@((byte)Model.Game.GameType == 5) value="Demo">Demo</option>
+                            <option selected=@((byte)Model.Game.GameType == 6) value="Software">Software</option>
                         </select>
                     </div>
                     <div><div>Release Date:</div> <input name="ReleaseDate" type="date" placeholder="Release date" value="@Model.Game.ReleaseDate?.ToString("yyyy-MM-dd")"></div>
@@ -172,7 +175,7 @@
             <component type="typeof(BlockImages)"
                        render-mode="Static"
                        param-Images="@Model.Game.Images.OrderBy(i => i.Order)"
-                       param-ImageServer="@Configuration["ImageServer"]" />
+                       param-ImageServer="@imageServer" />
         </main>
     </div>
 </body>

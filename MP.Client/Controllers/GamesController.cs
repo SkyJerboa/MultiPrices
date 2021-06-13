@@ -1,17 +1,16 @@
 ﻿using Dapper;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using MP.Client.Common.ClientMetadata;
 using MP.Client.Common.Configuration;
-using MP.Client.Common.Constants;
+using MP.Client.Common.Queries;
 using MP.Client.SiteModels;
 using MP.Client.SiteModels.GameModels.GameWithServices;
-using MP.Core.Common.Heplers;
 using MP.Core.Contexts.Games;
 using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
-using System.Text;
 
 namespace MP.Client.Controllers
 {
@@ -20,13 +19,6 @@ namespace MP.Client.Controllers
     [Produces("application/json")]
     public class GamesController : Controller
     {
-        private const string GAMES_COUNT_QUERY = @"
-            SELECT COUNT(""ID"") FROM ""Games"" WHERE ""Status"" = 'Completed'";
-
-        private const string TAG_CONDITION = @"EXISTS (
-            SELECT 1 FROM ""GameTagRelations"" WHERE ""Games"".""ID"" = ""GameID"" AND ""TagID"" IN (
-                SELECT ""ID"" FROM ""Tags"" WHERE ""Name"" in ({0})))";
-
         private IDbConnection _connection { get; }
 
         [FromQuery]
@@ -54,8 +46,6 @@ namespace MP.Client.Controllers
         [FromQuery]
         public string Sort { get; set; }
         [FromQuery]
-        public bool WithoutPrices { get; set; }
-        [FromQuery]
         public string Developer { get; set; }
 
 
@@ -68,22 +58,16 @@ namespace MP.Client.Controllers
         public IActionResult Index()
         {
             NormalizeVariables();
-            int offset = (Page - 1) * GamesPerPage;
-            StringBuilder queryBuilder = new StringBuilder();
-            queryBuilder.Append(Queries.GAMES_QUERY);
 
-            string withoutPricesCondition = @" AND ""CurrentPrice"" IS NOT NULL";
-            string piWhere = String.Format(Queries.COUNTRY_AND_CURRENCY_CONDITION, CountryCode, CurrencyCode, withoutPricesCondition);
-            string countQuery = GAMES_COUNT_QUERY + "\n" + piWhere;
+            GamesQueryBuilder queryBuilder = new GamesQueryBuilder();
 
-            queryBuilder.Append(piWhere);
-            queryBuilder.Append("\n");
-            queryBuilder.Append($"ORDER BY {GetOrderBy()}");
-            queryBuilder.Append($"\nLIMIT {GamesPerPage} OFFSET {offset}");
+            var (countQuery, gamesQuery) = queryBuilder
+                .SetCountryAndCurrency(CountryCode, CurrencyCode)
+                .SetOrder(Sort)
+                .SetLimits(Page, GamesPerPage)
+                .Build();
 
-            string query = String.Format(Queries.PRICES_WITH_GAMES_QUERY, queryBuilder.ToString(), CountryCode, CurrencyCode);
-
-            FilteredPage fp = ExecuteQueriesAndCreateObject(countQuery, query);
+            FilteredPage fp = ExecuteQueriesAndCreateObject(countQuery, gamesQuery);
             return new JsonResult(fp);
         }
 
@@ -94,79 +78,30 @@ namespace MP.Client.Controllers
         {
             NormalizeVariables();
 
-            StringBuilder whereBuilder = new StringBuilder();
+            GamesQueryBuilder gamesQueryBuilder = new GamesQueryBuilder();
 
-            string piWhere = "";
+            var (countQuery, gamesQuery) = gamesQueryBuilder
+                .SetGameServices(GameService)
+                .SetMaxPrice(Price)
+                .SetMinDiscount(Discount)
+                .SetCountryAndCurrency(CountryCode, CurrencyCode)
+                .SetTags(Tag)
+                .SetDeveloper(Developer)
+                .SetSearchPhrase(Q)
+                .SetTypes(Type)
+                .SetOrder(Sort)
+                .SetLimits(Page, GamesPerPage)
+                .Build();
 
-            if (!WithoutPrices)
-            {
-                piWhere += @" AND ""CurrentPrice"" IS NOT NULL";
-            }
-
-            if (GameService != null)
-            {
-                string[] gameServices = GameService.ToUpper().Split(',');
-                piWhere += $@" AND ""ServiceCode"" in('" + String.Join("','", gameServices) + "')";
-            }
-
-            if(Price != null)
-            {
-                piWhere += $@" AND ""CurrentPrice"" <= {Price}";
-            }
-
-            if(Discount != null)
-            {
-                piWhere += $@" AND ""Discount"" >= {Discount}";
-            }
-
-            whereBuilder.Append(String.Format(Queries.COUNTRY_AND_CURRENCY_CONDITION, CountryCode, CurrencyCode, piWhere));
-
-            if (Tag != null)
-            {
-                whereBuilder.Append("\nAND ");
-                string[] tags = Tag.Split(',');
-                string tagCondition = String.Format(TAG_CONDITION, $"'{String.Join(',', tags)}'");
-                whereBuilder.Append(tagCondition);
-            }
-
-            if (Developer != null)
-            {
-                whereBuilder.Append("\nAND");
-                whereBuilder.Append($@"""Games"".""Developer"" = '{Developer}'");
-            }
-
-            if (Q != null)
-            {
-                string nameId = StringHelper.CreateOneLineString(Q);
-                whereBuilder.Append("\nAND ");
-                whereBuilder.Append($@"""Games"".""NameID"" like '%{nameId}%'");
-            }
-
-            string typesCondition = GetTypeCondition();
-            whereBuilder.Append("\nAND ");
-            whereBuilder.Append(typesCondition);
-
-            string orderBy = GetOrderBy();
-
-            string countQuery = GAMES_COUNT_QUERY + "\n" + whereBuilder.ToString();
-
-            whereBuilder.Append($"\nORDER BY {orderBy}");
-
-            int offset = (Page - 1) * GamesPerPage;
-            whereBuilder.Append($"\nLIMIT {GamesPerPage} OFFSET {offset}");
-            
-            string query = $"{Queries.GAMES_QUERY}\n{whereBuilder}";
-            query = String.Format(Queries.PRICES_WITH_GAMES_QUERY, query, CountryCode, CurrencyCode);
-
-            FilteredPage fp = ExecuteQueriesAndCreateObject(countQuery, query);
+            FilteredPage fp = ExecuteQueriesAndCreateObject(countQuery, gamesQuery);
             return new JsonResult(fp);
         }
 
         FilteredPage ExecuteQueriesAndCreateObject(string countQuery, string dataQuery)
         {
             int count = _connection.QuerySingle<int>(countQuery);
-            IEnumerable<ServicePrice> prices = _connection.Query<ServicePrice, AllServicesGame, ServicePrice>(dataQuery, 
-                (price, game) => 
+            IEnumerable<ServicePrice> prices = _connection.Query<ServicePrice, AllServicesGame, ServicePrice>(dataQuery,
+                (price, game) =>
                 {
                     price.Game = game;
                     return price;
@@ -191,79 +126,19 @@ namespace MP.Client.Controllers
                 }
             }
 
+            SearchMetadataCreator metadataCreatot = new SearchMetadataCreator();
+
             FilteredPage fp = new FilteredPage
             {
                 CurrentPage = Page,
                 GamesCount = count,
-                MaxPages = (count / GamesPerPage) + 1,
+                MaxPages = GetMaxPages(count),
                 PerPage = GamesPerPage,
+                Meta = metadataCreatot.CreateMetadata(_connection, Request),
                 Games = games.Select(i => i.Value)
             };
 
             return fp;
-        }
-
-        private void NormalizeVariables()
-        {
-            if (GamesPerPage > 100 || GamesPerPage < 1)
-                GamesPerPage = FilteredPage.GAMES_PER_PAGE;
-            if (Page < 1)
-                Page = 1;
-        }
-
-        private string GetTypeCondition()
-        {
-            if (String.IsNullOrEmpty(Type))
-                return $@"""Games"".""GameType"" in ('{GameEntityType.FullGame}','{GameEntityType.Edition}')";
-
-            string[] typesSrc = Type.Split(',');
-            string[] typesSearch = new string[typesSrc.Length];
-
-            for (int i = 0; i < typesSrc.Length; i++)
-            {
-                string type = typesSrc[i].ToLower();
-                switch (type)
-                {
-                    case "game": typesSearch[i] = GameEntityType.FullGame.ToString(); break;
-                    case "edition": typesSearch[i] = GameEntityType.Edition.ToString(); break;
-                    case "dlc": typesSearch[i] = GameEntityType.DLC.ToString(); break;
-                    case "pack": typesSearch[i] = GameEntityType.Pack.ToString(); break;
-                    case "demo": typesSearch[i] = GameEntityType.Demo.ToString(); break;
-                }
-            }
-
-            if (typesSearch.Length == 1)
-                return $@"""Games"".""GameType"" = '{typesSearch[0]}'";
-            else
-                return $@"""Games"".""GameType"" in ('{String.Join("','", typesSearch)}')";
-        }
-
-        private string GetOrderBy()
-        {
-            string orderBy = @"""Games"".""Order"" DESC";
-            if (!String.IsNullOrEmpty(Sort))
-            {
-                switch (Sort.ToLower())
-                {
-                    case "releasedate":
-                        orderBy = @"""Games"".""ReleaseDate""";
-                        break;
-                    case "releasedatedesc":
-                        orderBy = @"""Games"".""ReleaseDate"" DESC";
-                        break;
-                    case "alphabet":
-                        orderBy = @"""Games"".""NameID""";
-                        break;
-                    case "price":
-                        orderBy = @"(SELECT MIN(""CurrentPrice"") FROM ""PriceInfos"" WHERE ""GameID"" = ""Games"".""ID"")";
-                        break;
-                    case "pricedesc":
-                        orderBy = @"(SELECT MIN(""CurrentPrice"") FROM ""PriceInfos"" WHERE ""GameID"" = ""Games"".""ID"") DESC";
-                        break;
-                }
-            }
-
-            return orderBy;
         }
 
         public static string CreateImageUrl(string url)
@@ -272,6 +147,26 @@ namespace MP.Client.Controllers
                 return null;
 
             return SiteConfigurationManager.Config.ImageServerUrl + url;
+        }
+
+        private void NormalizeVariables()
+        {
+            if (GamesPerPage > 100 || GamesPerPage < 3)
+                GamesPerPage = FilteredPage.GAMES_PER_PAGE;
+            if (Page < 1)
+                Page = 1;
+        }
+
+        private int GetMaxPages(int count)
+        {
+            if (count < 1)
+                return 0;
+
+            int maxPages = count / GamesPerPage;
+            if (count % GamesPerPage != 0)
+                maxPages++;
+
+            return maxPages;
         }
     }
 }

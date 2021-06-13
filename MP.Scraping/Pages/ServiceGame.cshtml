@@ -9,7 +9,7 @@
 @{
     Layout = null;
 
-    string imgServer = Configuration["ImageServer"];
+    string imgServer = Configuration.GetSection("ImageConfiguration")["ImageServerURL"];
 
     string mainImgUrl = imgServer + Model.ServiceCode.ToLower() + "/" +
         (Model.Game.Images.FirstOrDefault(i => i.Tag == ITags.IMG_VERTICAL)?.Path
@@ -89,7 +89,7 @@
                     <div><div>Game Name:</div> <input name="Name" type="text" placeholder="Game Name" value="@Model.Game.Name"></div>
                     <div><div>InnerID:</div> <input name="InnerID" type="text" placeholder="InnerID" value="@Model.Game.InnerID"></div>
                     <div><div>OfferID:</div> <input name="OfferID" type="text" placeholder="OfferID" value="@Model.Game.OfferID"></div>
-                    <div><div>Is Available:</div> <input name="IsAvailable" type="checkbox" value=true checked=@(Model.Game.IsAvailable)></div>
+                    <div><div>Available:</div> <input name="IsAvailable" type="checkbox" value=true checked=@(Model.Game.IsAvailable)></div>
                     <div>
                         <div>Release Date:</div> <input name="AvailabilityDate" type="date" placeholder="Release date" value="@Model.Game.AvailabilityDate?.ToString("yyyy-MM-dd")">
                         @Model.Game.AvailabilityString

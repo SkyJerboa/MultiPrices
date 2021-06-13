@@ -33,7 +33,7 @@ namespace MP.Scraping.GameProcessing
 
         private readonly object _imgMapSaveLocker = new object();
 
-        private LinkedTask _imgDownloadLastTask = new LinkedTask(() => { });
+        private TaskQueue _imgDownloadLastTask = new TaskQueue(() => { });
         private bool _canDeleteImgsMapFile;
         
         public ImageDownloader(string serviceCode, string serviceImgDirectory, GameBulkSaver gameSaver, CancellationToken token)
@@ -95,18 +95,14 @@ namespace MP.Scraping.GameProcessing
                 AddDownloadedImagesToGames(sGame.ImagesPath, mGame, sGame);
                 return;
             }
-            else
-            {
-                return;
-            }
 
             List<SGImage> sgImgs = new List<SGImage>();
             List<GImage> gImgs = new List<GImage>();
 
             DownloadImageAndAddToLists(gameImages.Vertical, ImageTags.IMG_VERTICAL);
             DownloadImageAndAddToLists(gameImages.Horizontal, ImageTags.IMG_HORIZONTAL);
-            DownloadImageAndAddToLists(gameImages.LogoPng, ImageTags.IMG_LOGO, "logo");
-            DownloadImageAndAddToLists(gameImages.LongHeader, ImageTags.HEADER, "header");
+            DownloadImageAndAddToLists(gameImages.LogoPng, ImageTags.IMG_LOGO);
+            DownloadImageAndAddToLists(gameImages.LongHeader, ImageTags.HEADER);
 
             string[] screenshotsUrls = gameImages.Screenshots ?? new string[0];
             foreach (string sUrl in screenshotsUrls)
@@ -141,6 +137,9 @@ namespace MP.Scraping.GameProcessing
                     Tag = tag,
                     SourceUrl = url
                 });
+
+                if (mGame.Status == GameStatus.Completed)
+                    return;
 
                 gImgs.Add(new GImage
                 {
@@ -275,25 +274,13 @@ namespace MP.Scraping.GameProcessing
 
         public void Dispose()
         {
-            if (NeedWaitTasks())
-            {
-                LinkedTask lt = _imgDownloadLastTask;
-                while (lt.Task.Status == TaskStatus.Canceled)
-                    lt = lt.Previous;
-
-                if (lt.Task.Status != TaskStatus.RanToCompletion)
-                    lt.Task.Wait();
-            }
+            _imgDownloadLastTask.WaitAllTasks();
 
             _client.Dispose();
 
             if (_canDeleteImgsMapFile)
                 lock(_imgMapSaveLocker)
                     File.Delete(_imageMapFilePath);
-
-            bool NeedWaitTasks() =>
-                _imgDownloadLastTask.Task.Status != TaskStatus.RanToCompletion 
-                    && _imgDownloadLastTask.Task.Status != TaskStatus.Created;
         }
     }
 }

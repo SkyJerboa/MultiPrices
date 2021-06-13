@@ -1,0 +1,53 @@
+﻿@page
+@model MP.Scraping.Pages.ToolsModel
+@using MP.Scraping.Common.Tools;
+@{
+    Layout = "_LayoutBootstrap";
+}
+
+<div>
+    <form method="post">
+        <input type="hidden" name="action" value="ftp-images-cleanup" />
+        <div class="card my-3">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="w-100">
+                        <a class="btn btn-link" data-toggle="collapse" data-target="#ftp-cleanup-info" aria-expanded="false" aria-controls="ftp-cleanup-info">
+                            Очистка изображений на FTP сервере
+                        </a>
+                    </div>
+                    <button type="submit" class="btn @(ImageSynchronizer.IsInActive ? "btn-danger" : "btn-primary") flex-shrink-1" disabled="@ImageSynchronizer.IsInActive">
+                        @(ImageSynchronizer.IsInActive ? "Запущено" : "Запустить")
+                    </button>
+                </div>
+                <div class="collapse multi-collapse" id="ftp-cleanup-info">
+                    <div style="white-space: pre-line">
+                        @ToolsModel.FtpCleanupInfo
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+    <form method="post">
+        <input type="hidden" name="action" value="ftp-images-upload-missings" />
+        <div class="card my-3">
+            <div class="card-body">
+                <div class="d-flex">
+                    <div class="w-100">
+                        <a class="btn btn-link" data-toggle="collapse" data-target="#ftp-upload-missings-info" aria-expanded="false" aria-controls="ftp-upload-missings-info">
+                            Загрузка пропущенных изображений на FTP сервер
+                        </a>
+                    </div>
+                    <button type="submit" class="btn @(ImageSynchronizer.IsInActive ? "btn-danger" : "btn-primary") flex-shrink-1" disabled="@ImageSynchronizer.IsInActive">
+                        @(ImageSynchronizer.IsInActive ? "Запущено" : "Запустить")
+                    </button>
+                </div>
+                <div class="collapse multi-collapse" id="ftp-upload-missings-info">
+                    <div style="white-space: pre-line">
+                        @ToolsModel.FtpMissingImgsInfo
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>

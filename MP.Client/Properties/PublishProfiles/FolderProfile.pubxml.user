@@ -7,6 +7,7 @@ https://go.microsoft.com/fwlink/?LinkID=208121.
     <_PublishTargetUrl>D:\Projects\Publishing\Site</_PublishTargetUrl>
     <TimeStampOfAssociatedLegacyPublishXmlFile />
     <EncryptedPassword>AQAAANCMnd8BFdERjHoAwE/Cl+sBAAAA9BLLzx4y20G9ThsDMqYpRQAAAAACAAAAAAAQZgAAAAEAACAAAAAPrFoDcv0CO7CmUVZxH9FdjEg1LCdJSJFqQjD0fzCarwAAAAAOgAAAAAIAACAAAADG18L6Rfag5sSC+ffxktyFZITwqHY2hiQXWdsOc4j/ChAAAADSVMYFXYHyshnMuEDRbfQyQAAAABjPkwXutuX9mHo09CRVlhi2AmBgB15gUI8QW7RQ+eqB/udXb5JaWw4FI7AUgsaOZnwNsXGDrdMwsmpT78uY090=</EncryptedPassword>
+    <History>True|2021-06-09T17:43:30.5732977Z;True|2021-06-08T22:15:40.0984541+03:00;True|2021-06-04T19:00:25.8736065+03:00;True|2021-06-04T18:49:26.6309596+03:00;True|2021-06-04T18:33:14.2930774+03:00;True|2021-05-22T22:44:31.9836128+03:00;True|2021-05-22T11:31:36.2635942+03:00;True|2021-05-18T21:44:44.9384879+03:00;True|2021-05-17T20:16:30.9107022+03:00;</History>
   </PropertyGroup>
   <ItemGroup>
     <File Include="appsettings.Development.json">

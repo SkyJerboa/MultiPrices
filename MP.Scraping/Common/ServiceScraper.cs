@@ -33,7 +33,9 @@ namespace MP.Scraping.Common
             {
                 ScriptLoader.CompileScripts();
                 ScriptLoader.LoadAssembly();
+#if RELEASE
                 RunScheduler();
+#endif
             }
             catch(Exception ex)
             {

@@ -1,1 +1,10 @@
 MP.Scraping/wwwroot/lib/
+MP.Client/bin/
+MP.Client/obj/
+MP.Core/bin/Debug/netcoreapp3.1/MP.Core.pdb
+MP.Core/bin/Debug/netcoreapp3.1/MP.Core.runtimeconfig.dev.json
+MP.Core/bin/Debug/netcoreapp3.1/MP.Core.runtimeconfig.json
+MP.Core/bin/
+MP.Core/obj/
+.vs/MultiPrices/DesignTimeBuild/.dtbcache.v2
+.vs/

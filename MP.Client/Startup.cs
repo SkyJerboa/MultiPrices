@@ -1,10 +1,10 @@
 ﻿using Dapper;
+using Jering.Javascript.NodeJS;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.HttpOverrides;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,9 +13,12 @@ using Microsoft.Extensions.Primitives;
 using Microsoft.IdentityModel.Tokens;
 using MP.Client.Common.Configuration;
 using MP.Client.Common.DapperMapper;
+using MP.Client.Common.Scheduler;
+using MP.Client.Common.Sitemap;
 using MP.Client.Contexts;
 using MP.Core.Common.Configuration;
 using MP.Core.Contexts.Games;
+using Npgsql;
 
 namespace MP.Client
 {
@@ -40,13 +43,12 @@ namespace MP.Client
         {
             _siteConfigurationManager
                 = ConfigurationLoader.LoadConfiguration<SiteConfigurationManager>(_configuration, out _configHash);
-            
+
             string conn = SiteConfigurationManager.DefaultConnection;
 
             services.AddDbContext<GameContext>(options => options.UseNpgsql(conn));
             services.AddDbContext<MainContext>(options => options.UseNpgsql(conn));
 
-            //удалить при релизе
             services.AddCors();
 
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -74,9 +76,18 @@ namespace MP.Client
                     o.SerializerSettings.Converters.Add(new Newtonsoft.Json.Converters.StringEnumConverter());
                 });
 
+
+            string clientFolder = _configuration["ClientFolder"] ?? "ClientBuild";
+
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = "mp-client/build";
+                configuration.RootPath = clientFolder + "/public";
+            });
+
+            services.AddNodeJS();
+            services.Configure<NodeJSProcessOptions>(o =>
+            {
+                o.ProjectPath = clientFolder;
             });
         }
 
@@ -87,14 +98,12 @@ namespace MP.Client
                 app.UseDeveloperExceptionPage();
             }
 
-            //app.UseHttpsRedirection();
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
             //app.UseCookiePolicy();
 
             app.UseRouting();
 
-            //удалить при релизе
             app.UseCors(builder => builder.AllowAnyOrigin());
 
             app.UseForwardedHeaders(new ForwardedHeadersOptions
@@ -119,25 +128,27 @@ namespace MP.Client
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
-                    name: "games",
-                    pattern: "{controller=Games}/{action=Index}"
+                    name: "default",
+                    pattern: "{controller=Pages}/{action=Index}/{id?}"
                 );
             });
 
-            app.UseSpa(spa =>
-            {
-                spa.Options.SourcePath = "mp-client";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseReactDevelopmentServer(npmScript: "start");
-                }
-            });
-
             ChangeToken.OnChange(() => _configuration.GetReloadToken(), ReloadConfig);
+
+            ConfigureScheduler();
         }
 
         private void ReloadConfig()
             => ConfigurationLoader.ReloadConfiguration(_siteConfigurationManager, ref _configHash);
+
+        private void ConfigureScheduler()
+        {
+            string connString = SiteConfigurationManager.DefaultConnection;
+            NpgsqlConnection dbConnection = new NpgsqlConnection(connString);
+            string publicFolder = HostingEnvironment.WebRootPath;
+
+            SchedulerManager scheduleManager = SchedulerManager.GetInstance();
+            scheduleManager.AddTask("sitemapBuilder", new SitemapScheduler(dbConnection, publicFolder));
+        }
     }
 }
